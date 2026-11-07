@@ -111,13 +111,7 @@ function contenidoTicketPayPos(datos, permitirAnular = false) {
                 aria-hidden="true"></span>
         </button>
       `
-      : `
-        <span class="comanda-ticket-marca">
-          ANULAR
-          <span class="comanda-ticket-circulo"
-                aria-hidden="true"></span>
-        </span>
-      `;
+      : "";
 
   return `
    <div class="comanda-ticket-logo">
@@ -169,16 +163,6 @@ function contenidoTicketPayPos(datos, permitirAnular = false) {
         : ""
     }
 
-    ${
-      anulada && datos.motivo_anulacion
-        ? `
-      <div class="comanda-ticket-motivo-anulada">
-        <strong>MOTIVO DE ANULACIÓN</strong>
-        <div>${escapar(datos.motivo_anulacion)}</div>
-      </div>
-    `
-        : ""
-    }
   `;
 }
 // ===== CONEXIÓN DE PAYPOS CON SUPABASE =====
@@ -1131,6 +1115,21 @@ async function consultarAccesoPayPos() {
 // ===== ACCESO DE ADMINISTRADORES Y CAJEROS =====
 window.payposAcceso = null;
 
+function payposConLimite(promise, mensaje, limiteMs = 12000) {
+  let temporizador;
+
+  const limite = new Promise((_, rechazar) => {
+    temporizador = window.setTimeout(
+      () => rechazar(new Error(mensaje)),
+      limiteMs,
+    );
+  });
+
+  return Promise.race([promise, limite]).finally(() => {
+    window.clearTimeout(temporizador);
+  });
+}
+
 (() => {
   const acceso = document.getElementById("acceso-administrador");
   const formulario = document.getElementById("form-acceso");
@@ -1139,6 +1138,7 @@ window.payposAcceso = null;
   const verClave = document.getElementById("mostrar-admin-clave");
   const ingresar = document.getElementById("ingresar-productos");
   const estado = document.getElementById("estado-acceso");
+  const estadoProductos = document.getElementById("productos-acceso-estado");
   const gestion = document.getElementById("gestion-autorizada");
   const salir = document.getElementById("salir-productos");
   const nuevoProducto = document.getElementById("nuevo-producto");
@@ -1161,7 +1161,9 @@ window.payposAcceso = null;
 
   document.getElementById("titulo-acceso").textContent = "Acceso a PayPos";
 
-  const descripcion = acceso.querySelector(".acceso-introduccion p");
+  const descripcion = acceso.querySelector(
+    ".acceso-introduccion .acceso-descripcion",
+  );
 
   if (descripcion) {
     descripcion.textContent =
@@ -1185,27 +1187,31 @@ window.payposAcceso = null;
     ingresar.textContent = valor ? "Verificando…" : "Ingresar";
   }
 
-  function aplicarAcceso(permisos) {
+  function aplicarAcceso(permisos, verificando = false) {
     window.payposAcceso = permisos;
 
     const autorizado = Boolean(permisos);
     const administrador = permisos?.esAdministrador === true;
 
-    // Los cajeros mantienen visible el área de acceso
-    // para consultar su caja y cerrar sesión.
-    acceso.hidden = administrador;
-    formulario.hidden = autorizado;
+    document.body.dataset.acceso = verificando
+      ? "verificando"
+      : autorizado
+        ? "autorizado"
+        : "anonimo";
+
+    acceso.hidden = autorizado;
+    formulario.hidden = autorizado || verificando;
     gestion.hidden = !administrador;
     salir.hidden = !autorizado;
+    estadoProductos.hidden = !autorizado || administrador;
 
     nuevoProducto.hidden = !administrador;
     nuevoProducto.disabled = !administrador;
 
     if (permisos && !administrador) {
-      mensaje(
-        `${permisos.caja.nombre} · Sesión iniciada. ` +
-          "Puedes ir a Inicio para preparar tus pedidos.",
-      );
+      estadoProductos.textContent =
+        `${permisos.caja.nombre} · ` +
+        "La gestión del catálogo está disponible para administración.";
     }
 
     document.dispatchEvent(
@@ -1236,7 +1242,7 @@ window.payposAcceso = null;
 
     bloquear(true);
     gestion.dataset.verificandoSesion = "true";
-    aplicarAcceso(null);
+    aplicarAcceso(null, true);
     mensaje("Comprobando tu cuenta…");
 
     try {
@@ -1244,10 +1250,10 @@ window.payposAcceso = null;
         throw new Error("No hay conexión con Supabase.");
       }
 
-      const { error } = await db.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { error } = await payposConLimite(
+        db.auth.signInWithPassword({ email, password }),
+        "La conexión está tardando. Revisa tu internet e intenta nuevamente.",
+      );
 
       if (version !== revision) return;
 
@@ -1255,10 +1261,14 @@ window.payposAcceso = null;
         throw new Error("No se pudo ingresar. Revisa tus datos y la conexión.");
       }
 
-      await comprobarAcceso(version);
+      await payposConLimite(
+        comprobarAcceso(version),
+        "La comprobación de permisos está tardando. Intenta nuevamente.",
+      );
     } catch (error) {
       if (version !== revision) return;
 
+      revision++;
       aplicarAcceso(null);
       mensaje(error.message || "No se pudo ingresar.", true);
     } finally {
@@ -1291,11 +1301,8 @@ window.payposAcceso = null;
       formulario.reset();
       mensaje("Sesión cerrada.");
     } catch {
-      salir.hidden = false;
-
       mensaje(
-        "No se pudo confirmar el cierre de sesión. " +
-          "Pulsa Cerrar sesión para intentar nuevamente.",
+        "No se pudo cerrar la sesión. Recarga la página e intenta nuevamente.",
         true,
       );
     } finally {
@@ -1310,31 +1317,40 @@ window.payposAcceso = null;
 
     bloquear(true);
     gestion.dataset.verificandoSesion = "true";
-    aplicarAcceso(null);
+    aplicarAcceso(null, true);
+    mensaje("Verificando tu sesión…");
 
     try {
-      if (!db) {
-        throw new Error("No hay conexión con Supabase.");
-      }
+      await payposConLimite(
+        (async () => {
+          if (!db) {
+            throw new Error("No hay conexión con Supabase.");
+          }
 
-      const { data, error } = await db.auth.getSession();
+          const { data, error } = await db.auth.getSession();
 
-      if (version !== revision) return;
+          if (version !== revision) return;
 
-      if (error) {
-        throw new Error("No se pudo recuperar la sesión.");
-      }
+          if (error) {
+            throw new Error("No se pudo recuperar la sesión.");
+          }
 
-      if (!data.session) {
-        mensaje("");
-        return;
-      }
+          if (!data.session) {
+            aplicarAcceso(null);
+            mensaje("");
+            return;
+          }
 
-      mensaje("Verificando sesión…");
-      await comprobarAcceso(version);
+          mensaje("Verificando sesión…");
+          await comprobarAcceso(version);
+        })(),
+        "La verificación tardó demasiado. Revisa tu conexión e intenta ingresar.",
+      );
     } catch (error) {
       if (version !== revision) return;
 
+      // Ignora cualquier respuesta tardía de la consulta que expiró.
+      revision++;
       aplicarAcceso(null);
       mensaje(error.message || "No se pudo verificar el acceso.", true);
     } finally {
@@ -2334,17 +2350,6 @@ window.payposTurnoActual = null;
   const cantidad = document.getElementById("comandas-cantidad");
 
   const recargar = document.getElementById("recargar-comandas");
-  const modalAnular = document.getElementById("modal-anular-comanda");
-
-  const cancelarAnulacion = document.getElementById("cancelar-anulacion");
-
-  const confirmarAnulacion = document.getElementById("confirmar-anulacion");
-
-  const tituloAnulacion = document.getElementById("titulo-anular-comanda");
-
-  const motivoAnulacion = document.getElementById("motivo-anulacion");
-
-  const estadoAnulacion = document.getElementById("estado-anulacion");
 
   if (
     !botonAbrir ||
@@ -2366,10 +2371,94 @@ window.payposTurnoActual = null;
   let temporizadorBusqueda = 0;
   let versionConsulta = 0;
 
-  let comandaParaAnular = null;
-  let anulandoComanda = false;
-  let temporizadorAnulacion = 0;
+  const anulacionesEnProceso = new Set();
+  const copiasEnProceso = new Set();
+  function puedeReimprimirOrden(cajaActual, cajaOriginal) {
+    const actual = Number(cajaActual);
+    const original = Number(cajaOriginal);
 
+    return [1, 2, 3, 4].includes(original) && (
+      actual === 1 ||
+      actual === 2 ||
+      ((actual === 3 || actual === 4) && actual === original)
+    );
+  }
+  async function reimprimirComanda(comanda, boton) {
+    const acceso = window.payposAcceso;
+    const caja = Number(acceso?.caja?.numero);
+
+    if (
+      !acceso?.usuarioId ||
+      ![1, 2, 3, 4].includes(caja) ||
+      !puedeReimprimirOrden(caja, comanda.caja_numero) ||
+      !comanda.id ||
+      String(comanda.estado).toLowerCase() === "anulada"
+    ) return;
+
+    const clave = `paypos-copia:${acceso.usuarioId}:${comanda.id}`;
+    if (copiasEnProceso.has(clave)) return;
+
+    copiasEnProceso.add(clave);
+    boton.disabled = true;
+    boton.textContent = "Solicitando…";
+
+    try {
+      // Si se perdió la respuesta, se reutiliza la misma solicitud.
+      let solicitud = sessionStorage.getItem(clave);
+      if (!solicitud) {
+        solicitud = crypto.randomUUID();
+        sessionStorage.setItem(clave, solicitud);
+      }
+
+      const { data, error } = await db.rpc("pos_reimprimir_comanda", {
+        p_venta_id: comanda.id,
+        p_solicitud_id: solicitud,
+      });
+
+      if (error) throw error;
+
+      if (data?.solicitud_id !== solicitud) {
+        throw new Error("No se pudo confirmar la solicitud de copia.");
+      }
+
+      if (caja === 2 && data.ruta === "puente") {
+        // Supabase ya dejó esta copia en el puente de Caja 2.
+      } else if (
+        [1, 3, 4].includes(caja) &&
+        data.ruta === "usb" &&
+        data.datos?.venta_id === comanda.id &&
+        Number(data.datos.caja_numero) === caja
+      ) {
+        // El programa USB distingue la copia del ticket original
+        // por el ID de impresión. El número de orden sigue siendo el mismo.
+        const copia = { ...data.datos, venta_id: solicitud };
+        localStorage.setItem(
+          "paypos-usb-venta:" + solicitud,
+          JSON.stringify(copia)
+        );
+        document.dispatchEvent(new Event("paypos:copia-usb-pendiente"));
+      } else {
+        throw new Error("La ruta de impresión no corresponde a esta caja.");
+      }
+
+      sessionStorage.removeItem(clave);
+      boton.textContent = "Copia en cola";
+      window.payposToast?.(`Copia de la orden #${comanda.numero} en cola.`);
+    } catch (error) {
+      boton.textContent = "Reintentar copia";
+      window.payposToast?.(
+        error?.message || "No se pudo solicitar la copia."
+      );
+    } finally {
+      setTimeout(() => {
+        copiasEnProceso.delete(clave);
+        boton.disabled = false;
+        if (boton.textContent === "Copia en cola") {
+          boton.textContent = "Reimprimir";
+        }
+      }, 2500);
+    }
+  }
   /* =========================================================
      TEXTO SEGURO
   ========================================================= */
@@ -2405,6 +2494,10 @@ window.payposTurnoActual = null;
     return `${dia} ${hora}`;
   }
 
+  function cajaPuedeAnular() {
+    return [1, 2].includes(Number(window.payposAcceso?.caja?.numero));
+  }
+
   /* =========================================================
      CREAR UNA COMANDA
   ========================================================= */
@@ -2412,23 +2505,49 @@ window.payposTurnoActual = null;
     const articulo = document.createElement("article");
 
     const anulada = String(datos.estado || "").toLowerCase() === "anulada";
+    const puedeAnular =
+      cajaPuedeAnular() && datos.puede_anular === true && !anulada;
 
     articulo.className = "comanda-ticket";
     articulo.classList.toggle("anulada", anulada);
     articulo.dataset.numero = String(datos.numero ?? "");
 
-    articulo.innerHTML = contenidoTicketPayPos(
-      datos,
-      datos.puede_anular === true && !anulada,
-    );
+    articulo.innerHTML = contenidoTicketPayPos(datos, puedeAnular);
 
     articulo
       .querySelector("[data-anular-comanda]")
       ?.addEventListener("click", (evento) => {
         evento.stopPropagation();
-        abrirAnulacion(datos);
+        void anularComanda(datos, evento.currentTarget);
+      });
+    const cajaActual = Number(window.payposAcceso?.caja?.numero);
+
+    if (
+      !anulada &&
+      datos.id &&
+      [1, 2, 3, 4].includes(cajaActual) &&
+      puedeReimprimirOrden(cajaActual, datos.caja_numero)
+    ) {
+      const acciones = document.createElement("div");
+      acciones.className = "comanda-acciones-copia";
+
+      const boton = document.createElement("button");
+      boton.type = "button";
+      boton.className = "comanda-reimprimir";
+      boton.textContent = "Reimprimir";
+      boton.setAttribute(
+        "aria-label",
+        `Reimprimir orden ${datos.numero}`
+      );
+
+      boton.addEventListener("click", (evento) => {
+        evento.stopPropagation();
+        void reimprimirComanda(datos, boton);
       });
 
+      acciones.appendChild(boton);
+      articulo.appendChild(acciones);
+    }
     return articulo;
   }
 
@@ -2559,105 +2678,26 @@ window.payposTurnoActual = null;
      ANULAR COMANDA
   ========================================================= */
 
-  function abrirAnulacion(comanda) {
+  async function anularComanda(comanda, boton) {
+    const numeroCaja = Number(window.payposAcceso?.caja?.numero);
+    const ventaId = comanda?.id;
+    const claveVenta = String(ventaId ?? "");
+
     if (
-      anulandoComanda ||
-      !comanda?.id ||
+      ![1, 2].includes(numeroCaja) ||
+      !ventaId ||
       comanda.puede_anular !== true ||
-      String(comanda.estado || "").toLowerCase() === "anulada"
+      String(comanda.estado || "").toLowerCase() === "anulada" ||
+      anulacionesEnProceso.has(claveVenta)
     ) {
       return;
     }
 
-    clearTimeout(temporizadorAnulacion);
-
-    comandaParaAnular = comanda;
-
-    tituloAnulacion.textContent = `Orden #${comanda.numero}`;
-
-    motivoAnulacion.value = "";
-
-    estadoAnulacion.textContent = "";
-
-    confirmarAnulacion.disabled = false;
-
-    cancelarAnulacion.disabled = false;
-
-    motivoAnulacion.disabled = false;
-
-    modalAnular.hidden = false;
-    modalAnular.inert = false;
-
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        modalAnular.classList.add("abierta");
-      });
-    });
-
-    setTimeout(() => {
-      motivoAnulacion.focus({
-        preventScroll: true,
-      });
-    }, 150);
-  }
-
-  function cerrarAnulacion(forzar = false) {
-    if (modalAnular.hidden || (anulandoComanda && !forzar)) {
-      return;
+    anulacionesEnProceso.add(claveVenta);
+    if (boton) {
+      boton.disabled = true;
+      boton.setAttribute("aria-busy", "true");
     }
-
-    modalAnular.classList.remove("abierta");
-
-    modalAnular.inert = true;
-
-    clearTimeout(temporizadorAnulacion);
-
-    temporizadorAnulacion = setTimeout(() => {
-      modalAnular.hidden = true;
-
-      comandaParaAnular = null;
-
-      motivoAnulacion.value = "";
-
-      estadoAnulacion.textContent = "";
-    }, 480);
-  }
-
-  async function anularComandaSeleccionada() {
-    if (anulandoComanda || !comandaParaAnular?.id) {
-      return;
-    }
-
-    const motivo = motivoAnulacion.value.trim();
-
-    if (motivo.length < 3) {
-      estadoAnulacion.textContent = "Escribe el motivo de la anulación.";
-
-      motivoAnulacion.focus();
-
-      return;
-    }
-
-    if (motivo.length > 180) {
-      estadoAnulacion.textContent =
-        "El motivo no puede superar 180 caracteres.";
-
-      return;
-    }
-
-    const ventaId = comandaParaAnular.id;
-
-    const numeroVenta = comandaParaAnular.numero;
-
-    anulandoComanda = true;
-
-    confirmarAnulacion.disabled = true;
-
-    cancelarAnulacion.disabled = true;
-
-    motivoAnulacion.disabled = true;
-
-    estadoAnulacion.textContent = "Anulando comanda…";
 
     try {
       if (!db) {
@@ -2666,52 +2706,30 @@ window.payposTurnoActual = null;
 
       const { data, error } = await db.rpc("pos_anular_venta", {
         p_venta_id: ventaId,
-
-        p_motivo: motivo,
+        // Mantiene compatible el RPC actual sin pedirle un motivo al cajero.
+        p_motivo: `Anulada desde Caja ${numeroCaja}`,
       });
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       if (data?.estado !== "anulada") {
         throw new Error("Supabase no confirmó la anulación.");
       }
 
       document.dispatchEvent(new Event("paypos:ventas-actualizadas"));
-
-      window.payposToast?.(`Orden #${numeroVenta} anulada`);
-
-      cerrarAnulacion(true);
-
-      /*
-        Recargamos las comandas.
-        Ahora aparecerá con el sello ANULADA.
-      */
+      window.payposToast?.(`Orden #${comanda.numero} anulada`);
       await cargarComandas();
     } catch (error) {
       console.error("PayPos · anular comanda:", error);
-
-      estadoAnulacion.textContent =
-        error?.message || "No se pudo anular la comanda.";
+      window.payposToast?.(error?.message || "No se pudo anular la comanda.");
     } finally {
-      anulandoComanda = false;
-
-      confirmarAnulacion.disabled = false;
-
-      cancelarAnulacion.disabled = false;
-
-      motivoAnulacion.disabled = false;
+      anulacionesEnProceso.delete(claveVenta);
+      if (boton?.isConnected) {
+        boton.disabled = false;
+        boton.removeAttribute("aria-busy");
+      }
     }
   }
-
-  cancelarAnulacion.addEventListener("click", () => {
-    cerrarAnulacion();
-  });
-
-  confirmarAnulacion.addEventListener("click", () => {
-    void anularComandaSeleccionada();
-  });
   /* =========================================================
      ABRIR PANTALLA
   ========================================================= */
@@ -2824,8 +2842,49 @@ window.payposTurnoActual = null;
   const preview = document.getElementById("preview-producto");
   const placeholder = document.getElementById("foto-placeholder");
   const mensaje = document.getElementById("mensaje-productos");
+  const selectorCategoria = document.getElementById("producto-categoria");
 
   let fotoTemporal = null;
+
+  function normalizarCategoriaProducto(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function seleccionarCategoriaProducto(valor) {
+    const buscada = normalizarCategoriaProducto(valor);
+    let opcion = [...selectorCategoria.options].find(
+      (item) => normalizarCategoriaProducto(item.value) === buscada,
+    );
+
+    if (!opcion && valor) {
+      opcion = new Option(valor, valor);
+      selectorCategoria.add(opcion);
+    }
+
+    selectorCategoria.value = opcion?.value || "";
+  }
+
+  document.addEventListener(
+    "paypos:categorias-productos-actualizadas",
+    (evento) => {
+      const categorias = Array.isArray(evento.detail) ? evento.detail : [];
+      const anterior = selectorCategoria.value;
+      const fragmento = document.createDocumentFragment();
+      fragmento.append(new Option("Seleccionar", ""));
+
+      categorias.forEach(({ value, label }) => {
+        fragmento.append(new Option(label, value));
+      });
+
+      selectorCategoria.replaceChildren(fragmento);
+      seleccionarCategoriaProducto(anterior);
+    },
+  );
+
   // ===== LISTA Y EDITOR COMO DOS VISTAS =====
 
   // Sacamos el editor de la distribución lateral.
@@ -3142,7 +3201,7 @@ window.payposTurnoActual = null;
     document.getElementById("producto-id").value = producto.id;
     document.getElementById("producto-nombre").value = producto.nombre;
     document.getElementById("producto-precio").value = producto.precio;
-    document.getElementById("producto-categoria").value = producto.categoria;
+    seleccionarCategoriaProducto(producto.categoria);
 
     // Conserva la foto existente si no seleccionas otra.
     editor.dataset.fotoActual = producto.foto_path || "";
@@ -3187,17 +3246,13 @@ window.payposTurnoActual = null;
 
         const precio = Number(precioTexto);
 
-        const categoria = document.getElementById("producto-categoria").value;
+        const categoria = selectorCategoria.value;
 
         const archivo = foto.files[0] || null;
 
-        const categorias = [
-          "Cervezas",
-          "Botellas",
-          "Cócteles",
-          "Sin alcohol",
-          "Otros",
-        ];
+        const categorias = [...selectorCategoria.options]
+          .map((opcion) => opcion.value)
+          .filter(Boolean);
 
         if (!nombre || nombre.length > 100) {
           throw new Error("Escribe un nombre de entre 1 y 100 caracteres.");
@@ -3459,6 +3514,80 @@ window.payposTurnoActual = null;
       .trim();
   }
 
+  const categoriasBase = [
+    "Cervezas",
+    "Botellas",
+    "Cócteles",
+    "Sin alcohol",
+    "Combos",
+    "Otros",
+  ];
+
+  function opcionesCategoriasDisponibles() {
+    const valores = [
+      ...new Set(
+        productos
+          .map((producto) => String(producto.categoria || "").trim())
+          .filter(Boolean),
+      ),
+    ];
+    const usadas = new Set();
+    const opciones = [];
+
+    categoriasBase.forEach((base) => {
+      const normalizada = normalizar(base);
+      const existente = valores.find(
+        (valor) => normalizar(valor) === normalizada,
+      );
+
+      opciones.push({
+        value: existente || base,
+        label: base,
+      });
+      usadas.add(normalizada);
+    });
+
+    valores
+      .sort((a, b) => a.localeCompare(b, "es"))
+      .forEach((valor) => {
+        const normalizada = normalizar(valor);
+        if (usadas.has(normalizada)) return;
+
+        opciones.push({ value: valor, label: valor });
+        usadas.add(normalizada);
+      });
+
+    return opciones;
+  }
+
+  function actualizarOpcionesSelect(select, textoInicial, opciones) {
+    if (!select) return;
+
+    const anterior = select.value;
+    const fragmento = document.createDocumentFragment();
+    fragmento.append(new Option(textoInicial, ""));
+    opciones.forEach(({ value, label }) => {
+      fragmento.append(new Option(label, value));
+    });
+    select.replaceChildren(fragmento);
+
+    const normalizada = normalizar(anterior);
+    const coincidencia = [...select.options].find(
+      (opcion) => normalizar(opcion.value) === normalizada,
+    );
+    select.value = coincidencia?.value || "";
+  }
+
+  function actualizarCategorias() {
+    const opciones = opcionesCategoriasDisponibles();
+    actualizarOpcionesSelect(filtro, "Todas las categorías", opciones);
+    document.dispatchEvent(
+      new CustomEvent("paypos:categorias-productos-actualizadas", {
+        detail: opciones,
+      }),
+    );
+  }
+
   // textContent evita interpretar nombres como código HTML.
   function texto(etiqueta, clase, contenido) {
     const nodo = document.createElement(etiqueta);
@@ -3580,7 +3709,6 @@ window.payposTurnoActual = null;
         }),
       );
     }
-
 
     articulo.addEventListener("click", seleccionarProducto);
 
@@ -3716,7 +3844,9 @@ window.payposTurnoActual = null;
     const resultados = productos.filter((producto) => {
       const coincideNombre = normalizar(producto.nombre).includes(busqueda);
 
-      const coincideCategoria = !categoria || producto.categoria === categoria;
+      const coincideCategoria =
+        !categoria ||
+        normalizar(producto.categoria || "") === normalizar(categoria);
 
       return coincideNombre && coincideCategoria;
     });
@@ -3834,6 +3964,7 @@ window.payposTurnoActual = null;
       if (!cargaVigente()) return;
 
       productos = resultado;
+      actualizarCategorias();
 
       const idsActuales = new Set(productos.map((producto) => producto.id));
 
@@ -3883,6 +4014,7 @@ window.payposTurnoActual = null;
     observadorFotos?.disconnect();
 
     productos = [];
+    actualizarCategorias();
     tarjetasInicio.clear();
     filasProductos.clear();
 
@@ -3926,6 +4058,504 @@ window.payposTurnoActual = null;
   document.addEventListener("paypos:acceso-cambiado", sincronizarSesion);
 
   sincronizarSesion();
+})();
+// ===== VISTAS Y REPORTE DE PRODUCTOS =====
+(() => {
+  const acceso = document.getElementById("gestion-autorizada");
+  const botonesVista = [
+    ...document.querySelectorAll("[data-products-view-button]"),
+  ];
+  const panelesVista = [...document.querySelectorAll("[data-products-panel]")];
+  const selectorVistas = document.getElementById("selector-vistas-productos");
+  const cabeceraVista = document.getElementById("cabecera-vista-productos");
+  const tituloReporte = document.getElementById("titulo-reporte-productos");
+  const tituloVistaActiva = document.getElementById(
+    "titulo-vista-productos-activa",
+  );
+  const volverSelector = document.getElementById("volver-selector-productos");
+  const desde = document.getElementById("desde-reporte-productos");
+  const hasta = document.getElementById("hasta-reporte-productos");
+  const filtroCategoria = document.getElementById(
+    "categoria-reporte-productos",
+  );
+  const filtroCaja = document.getElementById("caja-reporte-productos");
+  const filtroVistaReporte = document.getElementById("vista-reporte-productos");
+  const tablaReporte = document.getElementById("tabla-reporte-productos");
+  const encabezadoReporte = tablaReporte?.querySelector("thead tr");
+  const paginacion = document.getElementById("paginacion-detalle-ventas");
+  const cuerpo = document.getElementById("cuerpo-reporte-productos");
+  const estado = document.getElementById("estado-reporte-productos");
+  const botonAnterior = document.getElementById("anterior-detalle-ventas");
+  const botonSiguiente = document.getElementById("siguiente-detalle-ventas");
+  const indicadorPagina = document.getElementById("pagina-detalle-ventas");
+
+  if (
+    !acceso ||
+    !botonesVista.length ||
+    !panelesVista.length ||
+    !selectorVistas ||
+    !cabeceraVista ||
+    !tituloReporte ||
+    !tituloVistaActiva ||
+    !volverSelector ||
+    !desde ||
+    !hasta ||
+    !filtroCategoria ||
+    !filtroCaja ||
+    !filtroVistaReporte ||
+    !tablaReporte ||
+    !encabezadoReporte ||
+    !paginacion ||
+    !cuerpo ||
+    !estado ||
+    !botonAnterior ||
+    !botonSiguiente ||
+    !indicadorPagina
+  ) {
+    console.error("PayPos: faltan controles del informe de productos.");
+    return;
+  }
+
+  let vistaActual = null;
+  let versionReporte = 0;
+  let paginaReporte = 1;
+  let datosReporteActual = null;
+  let cajasReporteCargadas = false;
+  const ventasPorPagina = 25;
+
+  const formatoNumero = new Intl.NumberFormat("es-BO", {
+    maximumFractionDigits: 0,
+  });
+
+  function fechaHoyLaPaz() {
+    const partes = new Intl.DateTimeFormat("en", {
+      timeZone: "America/La_Paz",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const valor = Object.fromEntries(
+      partes.map((parte) => [parte.type, parte.value]),
+    );
+
+    return `${valor.year}-${valor.month}-${valor.day}`;
+  }
+
+  function establecerEstado(texto, error = false) {
+    estado.textContent = texto;
+    estado.hidden = !texto;
+    estado.dataset.error = String(error);
+  }
+
+  function limpiarTabla() {
+    cuerpo.replaceChildren();
+    establecerEstado("");
+    indicadorPagina.textContent = "";
+    botonAnterior.disabled = true;
+    botonSiguiente.disabled = true;
+  }
+
+  function actualizarOpcionesCategoria(opciones) {
+    const anterior = filtroCategoria.value;
+    const fragmento = document.createDocumentFragment();
+    fragmento.append(new Option("Todas las categorías", ""));
+
+    opciones.forEach(({ value, label }) => {
+      fragmento.append(new Option(label, value));
+    });
+
+    filtroCategoria.replaceChildren(fragmento);
+    const normalizar = (valor) =>
+      String(valor || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    const opcion = [...filtroCategoria.options].find(
+      (item) => normalizar(item.value) === normalizar(anterior),
+    );
+    filtroCategoria.value = opcion?.value || "";
+
+    if (vistaActual === "reports") void cargarReporte();
+  }
+
+  function actualizarOpcionesCaja(cajas) {
+    if (cajasReporteCargadas) return;
+
+    const anterior = filtroCaja.value;
+    const porNumero = new Map();
+    cajas.forEach((caja) => {
+      const numero = Number(caja?.numero);
+      if (!Number.isSafeInteger(numero) || numero < 1) return;
+      porNumero.set(String(numero), {
+        numero,
+        nombre: String(caja?.nombre || `Caja ${numero}`),
+      });
+    });
+
+    const fragmento = document.createDocumentFragment();
+    fragmento.append(new Option("Todas las cajas", ""));
+    [...porNumero.values()]
+      .sort((a, b) => a.numero - b.numero)
+      .forEach((caja) => {
+        fragmento.append(new Option(caja.nombre, String(caja.numero)));
+      });
+
+    filtroCaja.replaceChildren(fragmento);
+    filtroCaja.value = porNumero.has(anterior) ? anterior : "";
+    cajasReporteCargadas = true;
+  }
+
+  function textoBs(valor) {
+    const numero = Number(valor);
+    return `Bs ${formatoNumero.format(Number.isFinite(numero) ? numero : 0)}`;
+  }
+
+  function fechaHoraVenta(valor) {
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return "Hora no disponible";
+
+    return new Intl.DateTimeFormat("es-BO", {
+      timeZone: "America/La_Paz",
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(fecha);
+  }
+
+  function actualizarEncabezadoReporte(columnas) {
+    const fila = document.createDocumentFragment();
+    columnas.forEach((texto) => {
+      const celda = document.createElement("th");
+      celda.scope = "col";
+      celda.textContent = texto;
+      fila.append(celda);
+    });
+    encabezadoReporte.replaceChildren(fila);
+  }
+
+  function dibujarReporte(data) {
+    datosReporteActual = data;
+    limpiarTabla();
+
+    if (Array.isArray(data.cajas)) {
+      actualizarOpcionesCaja(data.cajas);
+    }
+
+    if (filtroVistaReporte.value === "general") {
+      tituloReporte.textContent = "Resumen general por producto";
+      tablaReporte.dataset.modo = "general";
+      paginacion.hidden = true;
+      actualizarEncabezadoReporte([
+        "Producto",
+        "Categoría",
+        "Cantidad total",
+        "Total venta",
+      ]);
+
+      const productos = Array.isArray(data.productos) ? data.productos : [];
+      const fragmentoGeneral = document.createDocumentFragment();
+      productos.forEach((producto) => {
+        const fila = document.createElement("tr");
+        const valores = [
+          producto.producto || "Producto sin nombre",
+          producto.categoria || "Sin categoría",
+          formatoNumero.format(Number(producto.unidades) || 0),
+          textoBs(producto.total_cobrado_bs),
+        ];
+        valores.forEach((valor) => {
+          const celda = document.createElement("td");
+          celda.textContent = valor;
+          fila.append(celda);
+        });
+        fragmentoGeneral.append(fila);
+      });
+      cuerpo.append(fragmentoGeneral);
+
+      const totalUnidades = Number(data.total_unidades) || 0;
+      establecerEstado(
+        productos.length
+          ? `${formatoNumero.format(
+              productos.length,
+            )} productos · ${formatoNumero.format(
+              totalUnidades,
+            )} unidades vendidas en el período.`
+          : "No hay ventas para los filtros elegidos.",
+      );
+      return;
+    }
+
+    tituloReporte.textContent = "Ventas detalladas por producto";
+    tablaReporte.dataset.modo = "detail";
+    paginacion.hidden = false;
+    actualizarEncabezadoReporte([
+      "Producto",
+      "Categoría",
+      "Descuento",
+      "Nota",
+      "Fecha y hora",
+      "N.º de venta",
+      "Caja",
+      "Cantidad",
+      "Total cobrado",
+    ]);
+
+    const ventas = Array.isArray(data.ventas) ? data.ventas : [];
+    const totalVentas = Math.max(0, Number(data.total_ventas) || 0);
+    const totalPaginas = Math.max(0, Number(data.total_paginas) || 0);
+    const pagina = Math.max(1, Number(data.pagina) || paginaReporte);
+    const porPagina = Math.max(1, Number(data.por_pagina) || ventasPorPagina);
+    const primeraVenta = totalVentas ? (pagina - 1) * porPagina + 1 : 0;
+    const ultimaVenta = Math.min(pagina * porPagina, totalVentas);
+    paginaReporte = pagina;
+
+    const filas = [];
+    ventas.forEach((venta) => {
+      const productos = Array.isArray(venta.productos) ? venta.productos : [];
+      productos.forEach((producto) => filas.push({ venta, producto }));
+    });
+
+    const fragmentoDetalle = document.createDocumentFragment();
+    filas.forEach((fila) => {
+      const tr = document.createElement("tr");
+      const descuento = Number(fila.venta.descuento_bs) || 0;
+      let textoDescuento = descuento > 0 ? textoBs(descuento) : "Sin descuento";
+      if (
+        descuento > 0 &&
+        fila.venta.descuento_tipo === "porcentaje" &&
+        Number(fila.venta.descuento_valor) > 0
+      ) {
+        textoDescuento += ` (${formatoNumero.format(
+          Number(fila.venta.descuento_valor),
+        )}%)`;
+      }
+      const valores = [
+        fila.producto.producto || "Producto sin nombre",
+        fila.producto.categoria || "Sin categoría",
+        textoDescuento,
+        fila.producto.nota || fila.venta.nota || "",
+        fechaHoraVenta(fila.venta.creada_en),
+        `#${fila.venta.numero ?? "—"}`,
+        fila.venta.caja_nombre || `Caja ${fila.venta.caja_numero ?? "—"}`,
+        formatoNumero.format(Number(fila.producto.unidades) || 0),
+        textoBs(fila.producto.total_cobrado_bs),
+      ];
+
+      valores.forEach((valor) => {
+        const celda = document.createElement("td");
+        celda.textContent = valor;
+        tr.append(celda);
+      });
+      fragmentoDetalle.append(tr);
+    });
+    cuerpo.append(fragmentoDetalle);
+
+    if (totalVentas > 0) {
+      establecerEstado(
+        `${formatoNumero.format(primeraVenta)}–${formatoNumero.format(
+          ultimaVenta,
+        )} de ${formatoNumero.format(
+          totalVentas,
+        )} ventas · ${formatoNumero.format(
+          filas.length,
+        )} productos detallados en esta página.`,
+      );
+    } else {
+      establecerEstado("No hay ventas para los filtros elegidos.");
+    }
+
+    indicadorPagina.textContent = totalVentas
+      ? `Página ${pagina} de ${totalPaginas}`
+      : "Sin ventas";
+    botonAnterior.disabled = pagina <= 1 || totalPaginas === 0;
+    botonSiguiente.disabled = pagina >= totalPaginas || totalPaginas === 0;
+  }
+
+  async function cargarReporte() {
+    const version = ++versionReporte;
+    const permisos = window.payposAcceso;
+
+    datosReporteActual = null;
+    limpiarTabla();
+
+    if (!permisos?.esAdministrador) {
+      establecerEstado(
+        "Inicia sesión como administrador para ver los informes.",
+      );
+      return;
+    }
+
+    if (!desde.value || !hasta.value) {
+      establecerEstado(
+        "Selecciona las dos fechas para generar el informe.",
+        true,
+      );
+      return;
+    }
+
+    if (desde.value > hasta.value) {
+      establecerEstado(
+        "La fecha inicial no puede ser posterior a la fecha final.",
+        true,
+      );
+      return;
+    }
+
+    establecerEstado("Cargando informe…");
+
+    try {
+      if (!db) throw new Error("No hay conexión con Supabase.");
+
+      const { data, error } = await db.rpc("pos_reporte_productos_detallado", {
+        p_desde: desde.value,
+        p_hasta: hasta.value,
+        p_categoria: filtroCategoria.value || null,
+        p_caja_numero: filtroCaja.value ? Number(filtroCaja.value) : null,
+        p_pagina: paginaReporte,
+        p_por_pagina: ventasPorPagina,
+      });
+
+      if (version !== versionReporte) return;
+
+      if (error) {
+        if (
+          error.code === "PGRST202" ||
+          /pos_reporte_productos_detallado/i.test(error.message || "")
+        ) {
+          throw new Error(
+            "Falta ejecutar el nuevo SQL del informe en Supabase. Abre el archivo de migración y ejecútalo en SQL Editor.",
+          );
+        }
+        throw error;
+      }
+
+      if (
+        !data ||
+        !Array.isArray(data.productos) ||
+        !Array.isArray(data.ventas) ||
+        !Array.isArray(data.cajas)
+      ) {
+        throw new Error("La respuesta del informe no tiene un formato válido.");
+      }
+
+      dibujarReporte(data);
+    } catch (error) {
+      if (version !== versionReporte) return;
+      console.error("PayPos · informe de productos:", error);
+      limpiarTabla();
+      const mensaje =
+        error?.message || "No se pudo cargar el informe de productos.";
+      establecerEstado(mensaje, true);
+    }
+  }
+
+  function cambiarVista(vista) {
+    if (!["catalog", "reports"].includes(vista)) return;
+    vistaActual = vista;
+    selectorVistas.hidden = true;
+    cabeceraVista.hidden = false;
+    tituloVistaActiva.textContent =
+      vista === "catalog" ? "Catálogo" : "Informes de productos";
+
+    botonesVista.forEach((boton) => {
+      const activo = boton.dataset.productsViewButton === vista;
+      boton.classList.toggle("activo", activo);
+      boton.setAttribute("aria-pressed", String(activo));
+    });
+
+    panelesVista.forEach((panel) => {
+      const activo = panel.dataset.productsPanel === vista;
+      panel.hidden = !activo;
+      panel.inert = !activo;
+    });
+
+    if (vista === "reports") void cargarReporte();
+  }
+
+  function mostrarSelectorVistas() {
+    ++versionReporte;
+    vistaActual = null;
+    datosReporteActual = null;
+    selectorVistas.hidden = false;
+    cabeceraVista.hidden = true;
+
+    botonesVista.forEach((boton) => {
+      boton.classList.remove("activo");
+      boton.setAttribute("aria-pressed", "false");
+    });
+
+    panelesVista.forEach((panel) => {
+      panel.hidden = true;
+      panel.inert = true;
+    });
+
+    limpiarTabla();
+    establecerEstado("Elige un rango de fechas para generar el informe.");
+  }
+
+  const hoy = fechaHoyLaPaz();
+  desde.max = hoy;
+  hasta.max = hoy;
+  if (!desde.value) desde.value = `${hoy.slice(0, 7)}-01`;
+  if (!hasta.value) hasta.value = hoy;
+
+  botonesVista.forEach((boton) => {
+    boton.addEventListener("click", () =>
+      cambiarVista(boton.dataset.productsViewButton),
+    );
+  });
+  volverSelector.addEventListener("click", mostrarSelectorVistas);
+
+  [desde, hasta, filtroCategoria, filtroCaja].forEach((control) => {
+    control.addEventListener("change", () => {
+      paginaReporte = 1;
+      if (vistaActual === "reports") void cargarReporte();
+    });
+  });
+
+  filtroVistaReporte.addEventListener("change", () => {
+    if (vistaActual !== "reports") return;
+    if (datosReporteActual) {
+      dibujarReporte(datosReporteActual);
+      return;
+    }
+    void cargarReporte();
+  });
+
+  botonAnterior.addEventListener("click", () => {
+    if (paginaReporte <= 1) return;
+    paginaReporte -= 1;
+    void cargarReporte();
+  });
+
+  botonSiguiente.addEventListener("click", () => {
+    paginaReporte += 1;
+    void cargarReporte();
+  });
+
+  document.addEventListener(
+    "paypos:categorias-productos-actualizadas",
+    (evento) => {
+      actualizarOpcionesCategoria(
+        Array.isArray(evento.detail) ? evento.detail : [],
+      );
+    },
+  );
+
+  document.addEventListener("paypos:ventas-actualizadas", () => {
+    if (vistaActual === "reports") void cargarReporte();
+  });
+
+  document.addEventListener("paypos:acceso-cambiado", () => {
+    ++versionReporte;
+    paginaReporte = 1;
+    datosReporteActual = null;
+    cajasReporteCargadas = false;
+    filtroCaja.replaceChildren(new Option("Todas las cajas", ""));
+    limpiarTabla();
+    mostrarSelectorVistas();
+  });
+
+  mostrarSelectorVistas();
 })();
 // ===== FOTO CON RECORTE Y TOAST =====
 (() => {
@@ -4242,7 +4872,7 @@ window.payposTurnoActual = null;
       const opcion = document.createElement("option");
 
       opcion.value = "";
-      opcion.textContent = "Selecciona método";
+      opcion.textContent = "Elige";
 
       opcion.disabled = true;
 
@@ -5157,7 +5787,6 @@ window.payposTurnoActual = null;
       });
     }
 
-
     dibujarPedido();
 
     anuncio.textContent =
@@ -5171,7 +5800,6 @@ window.payposTurnoActual = null;
       buscadorInicio.dispatchEvent(new Event("input", { bubbles: true }));
       buscadorInicio.focus({ preventScroll: true });
     }
-
   });
 
   vaciar.addEventListener("click", () => {
@@ -5386,6 +6014,8 @@ window.payposTurnoActual = null;
     cobroTarjetaTotal.textContent = textoBs(totalBs);
 
     mixtoTotal.textContent = textoBs(totalBs);
+    mixtoRestante.textContent = textoBs(totalBs);
+    mixtoRestante.classList.remove("completo");
 
     efectivoRecibido.value = "";
 
@@ -5720,6 +6350,10 @@ window.payposTurnoActual = null;
       Lo que sobra del efectivo es cambio.
     */
     const cambio = Math.max(0, efectivoRecibido - efectivoNecesario);
+    const restante = Math.max(
+      0,
+      totalBs - noEfectivo - efectivoRecibido,
+    );
 
     return {
       totalBs,
@@ -5728,6 +6362,7 @@ window.payposTurnoActual = null;
       efectivoRecibido,
       efectivoNecesario,
       cambio,
+      restante,
     };
   }
 
@@ -5740,6 +6375,8 @@ window.payposTurnoActual = null;
       menos lo que realmente faltaba pagar.
     */
     mixtoCambio.textContent = textoBs(datos.cambio);
+    mixtoRestante.textContent = textoBs(datos.restante);
+    mixtoRestante.classList.toggle("completo", datos.restante === 0);
 
     const hayEfectivo = datos.lineas.some(
       (linea) => linea.metodo === "efectivo" && linea.monto > 0,
@@ -6035,13 +6672,10 @@ window.payposTurnoActual = null;
     pendientesUSB.set(copia.venta_id, copia);
 
     try {
-      localStorage.setItem(
-        prefijoUSB + copia.venta_id,
-        JSON.stringify(copia)
-      );
+      localStorage.setItem(prefijoUSB + copia.venta_id, JSON.stringify(copia));
     } catch {
       avisarUSB(
-        "Venta guardada. No cierres esta pagina hasta que salga la comanda."
+        "Venta guardada. No cierres esta pagina hasta que salga la comanda.",
       );
     }
 
@@ -6049,28 +6683,21 @@ window.payposTurnoActual = null;
   }
 
   async function consultarUSB(ruta, datos) {
-    const respuesta = await fetch(
-      "http://127.0.0.1:17891" + ruta,
-      {
-        method: datos ? "POST" : "GET",
-        mode: "cors",
-        credentials: "omit",
-        cache: "no-store",
-        targetAddressSpace: "loopback",
-        headers: datos
-          ? { "Content-Type": "application/json" }
-          : {},
-        body: datos ? JSON.stringify(datos) : undefined,
-        signal: AbortSignal.timeout(8000),
-      }
-    );
+    const respuesta = await fetch("http://127.0.0.1:17891" + ruta, {
+      method: datos ? "POST" : "GET",
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-store",
+      targetAddressSpace: "loopback",
+      headers: datos ? { "Content-Type": "application/json" } : {},
+      body: datos ? JSON.stringify(datos) : undefined,
+      signal: AbortSignal.timeout(8000),
+    });
 
     const resultado = await respuesta.json();
 
     if (!respuesta.ok) {
-      throw new Error(
-        resultado.error || "Error de impresion local."
-      );
+      throw new Error(resultado.error || "Error de impresion local.");
     }
 
     return resultado;
@@ -6095,12 +6722,12 @@ window.payposTurnoActual = null;
         }
       } catch {
         avisarUSB(
-          "No se pudieron recuperar todas las comandas pendientes del navegador."
+          "No se pudieron recuperar todas las comandas pendientes del navegador.",
         );
       }
 
       const trabajos = [...pendientesUSB.values()].filter(
-        datos => Number(datos.caja_numero) === caja
+        (datos) => Number(datos.caja_numero) === caja,
       );
 
       if (!trabajos.length) return;
@@ -6108,15 +6735,11 @@ window.payposTurnoActual = null;
       const estado = await consultarUSB("/estado");
 
       if (estado.caja !== caja) {
-        throw new Error(
-          "La caja de esta laptop no coincide con tu sesion."
-        );
+        throw new Error("La caja de esta laptop no coincide con tu sesion.");
       }
 
       if (!estado.disponible) {
-        throw new Error(
-          "Revisa el programa local y la impresora USB."
-        );
+        throw new Error("Revisa el programa local y la impresora USB.");
       }
 
       for (const datos of trabajos) {
@@ -6136,7 +6759,7 @@ window.payposTurnoActual = null;
         } else if (["error", "revision"].includes(trabajo.estado)) {
           avisarUSB(
             `Venta ${datos.numero} guardada. Revisa la impresion: ` +
-            `${trabajo.error || trabajo.estado}. No vuelvas a cobrarla.`
+              `${trabajo.error || trabajo.estado}. No vuelvas a cobrarla.`,
           );
           break;
         }
@@ -6144,15 +6767,15 @@ window.payposTurnoActual = null;
     } catch (error) {
       avisarUSB(
         "Venta guardada; comanda pendiente. " +
-        (error.message === "Failed to fetch"
-          ? "No se pudo conectar con la impresora local."
-          : error.message)
+          (error.message === "Failed to fetch"
+            ? "No se pudo conectar con la impresora local."
+            : error.message),
       );
     } finally {
       enviandoUSB = false;
     }
   }
-
+  document.addEventListener("paypos:copia-usb-pendiente", () => void procesarUSB());
   setInterval(() => void procesarUSB(), 5000);
   /* =========================================================
      CONFIRMAR EN SUPABASE
@@ -6281,7 +6904,7 @@ window.payposTurnoActual = null;
 
         if (numeroCajaImpresion === 2) {
           window.payposToast?.(
-            "Venta guardada. Comanda enviada a la cola de impresión."
+            "Venta guardada. Comanda enviada a la cola de impresión.",
           );
         } else {
           imprimirComanda(datosComanda);
@@ -6289,12 +6912,12 @@ window.payposTurnoActual = null;
       } catch (error) {
         console.error(
           "PayPos: venta registrada, pero no se pudo preparar la comanda.",
-          error
+          error,
         );
 
         window.payposToast?.(
           "Venta registrada. Error de impresión: " +
-          (error?.message || "Error desconocido")
+            (error?.message || "Error desconocido"),
         );
       }
       setTimeout(() => {
@@ -8103,18 +8726,23 @@ window.payposTurnoActual = null;
     }
 
     // Fecha y caja, como las celdas amarillas del original.
-    poner(2, 2, new Intl.DateTimeFormat("es-BO", {
-      timeZone: "America/La_Paz",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric"
-    }).format(new Date()), {
-      span: 3,
-      fondo: "#ffff00",
-      centro: true,
-      negrita: true,
-      tamaño: 15,
-    });
+    poner(
+      2,
+      2,
+      new Intl.DateTimeFormat("es-BO", {
+        timeZone: "America/La_Paz",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(new Date()),
+      {
+        span: 3,
+        fondo: "#ffff00",
+        centro: true,
+        negrita: true,
+        tamaño: 15,
+      },
+    );
 
     poner(3, 2, `CAJA ${caja}`, {
       span: 3,
@@ -8588,12 +9216,10 @@ window.payposTurnoActual = null;
         const caja = data.cajas.find(
           (item) => Number(item.caja_numero) === numero,
         );
-        const celdaNombreCaja = hoja.querySelector("table")
-          ?.rows[2]?.cells[1];
+        const celdaNombreCaja = hoja.querySelector("table")?.rows[2]?.cells[1];
 
         if (celdaNombreCaja) {
-          celdaNombreCaja.textContent =
-            caja?.caja_nombre || `Caja ${numero}`;
+          celdaNombreCaja.textContent = caja?.caja_nombre || `Caja ${numero}`;
         }
         const abierta = caja?.tiene_turno_abierto === true;
 
@@ -9327,13 +9953,9 @@ window.payposImprimirCierres = async function (cierres) {
   reimprimir.type = "button";
   reimprimir.textContent = "Reimprimir último cierre";
   reimprimir.className = "apertura-caja-volver";
-  const pestanasCierre = pantalla.querySelector(
-    ".cierre-jornada-pestanas"
-  );
+  const pestanasCierre = pantalla.querySelector(".cierre-jornada-pestanas");
 
-  const volverCierre = document.getElementById(
-    "cerrar-pantalla-cierre"
-  );
+  const volverCierre = document.getElementById("cerrar-pantalla-cierre");
 
   const barraCierre = document.createElement("div");
   barraCierre.className = "cierre-barra-herramientas";
@@ -9365,23 +9987,20 @@ window.payposImprimirCierres = async function (cierres) {
     botonPdfCierre.disabled = true;
     botonPdfCierre.textContent = "Preparando imágenes…";
 
-    const escapar = valor => String(valor ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&apos;");
+    const escapar = (valor) =>
+      String(valor ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&apos;");
 
     function colorVisible(color) {
       if (color === "transparent") return false;
 
       const partes = color.match(/[\d.]+/g);
 
-      return !(
-        partes &&
-        partes.length > 3 &&
-        Number(partes[3]) === 0
-      );
+      return !(partes && partes.length > 3 && Number(partes[3]) === 0);
     }
 
     try {
@@ -9391,22 +10010,23 @@ window.payposImprimirCierres = async function (cierres) {
         throw new Error("Espera a que se carguen las cajas.");
       }
 
-      const cajas = datos.cajas.filter(caja =>
-        caja.tiene_turno_abierto === true &&
-        Number(caja.ventas_con_monto) > 0
+      const cajas = datos.cajas.filter(
+        (caja) =>
+          caja.tiene_turno_abierto === true &&
+          Number(caja.ventas_con_monto) > 0,
       );
 
       if (!cajas.length) {
         throw new Error(
-          "No hay cajas con ventas válidas con monto para descargar."
+          "No hay cajas con ventas válidas con monto para descargar.",
         );
       }
 
       // Copiar todas las hojas antes de comenzar:
       // así los datos no cambian durante la generación.
-      const trabajos = cajas.map(caja => {
+      const trabajos = cajas.map((caja) => {
         const original = contenedor.querySelector(
-          `[data-cierre-hoja="${Number(caja.caja_numero)}"] table`
+          `[data-cierre-hoja="${Number(caja.caja_numero)}"] table`,
         );
 
         if (!original) {
@@ -9422,17 +10042,10 @@ window.payposImprimirCierres = async function (cierres) {
 
           if (
             origen.validity.badInput ||
-            (
-              valor !== "" &&
-              (
-                !Number.isSafeInteger(Number(valor)) ||
-                Number(valor) < 0
-              )
-            )
+            (valor !== "" &&
+              (!Number.isSafeInteger(Number(valor)) || Number(valor) < 0))
           ) {
-            throw new Error(
-              `Revisa los importes de Caja ${caja.caja_numero}.`
-            );
+            throw new Error(`Revisa los importes de Caja ${caja.caja_numero}.`);
           }
 
           const texto = document.createElement("span");
@@ -9446,7 +10059,7 @@ window.payposImprimirCierres = async function (cierres) {
 
         return {
           numero: Number(caja.caja_numero),
-          tabla
+          tabla,
         };
       });
 
@@ -9454,7 +10067,7 @@ window.payposImprimirCierres = async function (cierres) {
         timeZone: "America/La_Paz",
         day: "2-digit",
         month: "2-digit",
-        year: "numeric"
+        year: "numeric",
       }).format(new Date());
 
       soporte = document.createElement("div");
@@ -9491,7 +10104,7 @@ window.payposImprimirCierres = async function (cierres) {
         }
 
         const dibujos = [
-          `<rect width="${ancho}" height="${alto}" fill="#dedede"/>`
+          `<rect width="${ancho}" height="${alto}" fill="#dedede"/>`,
         ];
 
         const filas = [...tabla.rows];
@@ -9519,18 +10132,13 @@ window.payposImprimirCierres = async function (cierres) {
               ["Top", x, y, x + w, y],
               ["Right", x + w, y, x + w, y + h],
               ["Bottom", x, y + h, x + w, y + h],
-              ["Left", x, y, x, y + h]
+              ["Left", x, y, x, y + h],
             ];
 
             for (const [lado, x1, y1, x2, y2] of lados) {
-              const grosor = parseFloat(
-                estilo[`border${lado}Width`]
-              );
+              const grosor = parseFloat(estilo[`border${lado}Width`]);
 
-              if (
-                grosor > 0 &&
-                estilo[`border${lado}Style`] !== "none"
-              ) {
+              if (grosor > 0 && estilo[`border${lado}Style`] !== "none") {
                 dibujos.push(`
                   <line
                     x1="${x1}" y1="${y1}"
@@ -9542,27 +10150,28 @@ window.payposImprimirCierres = async function (cierres) {
               }
             }
 
-            const contenido = celda.textContent
-              .trim()
-              .replace(/\s+/g, " ");
+            const contenido = celda.textContent.trim().replace(/\s+/g, " ");
 
             if (!contenido) continue;
 
-            const elementoTexto =
-              celda.querySelector("span") || celda;
+            const elementoTexto = celda.querySelector("span") || celda;
 
             const textoEstilo = getComputedStyle(elementoTexto);
             const alineacion = textoEstilo.textAlign;
 
-            const posicionX = alineacion === "right"
-              ? x + w - 4
-              : alineacion === "center"
-                ? x + w / 2
-                : x + 4;
+            const posicionX =
+              alineacion === "right"
+                ? x + w - 4
+                : alineacion === "center"
+                  ? x + w / 2
+                  : x + 4;
 
-            const ancla = alineacion === "right"
-              ? "end"
-              : alineacion === "center" ? "middle" : "start";
+            const ancla =
+              alineacion === "right"
+                ? "end"
+                : alineacion === "center"
+                  ? "middle"
+                  : "start";
 
             const clipId = `celda-${indice}-${celda.cellIndex}`;
 
@@ -9588,7 +10197,7 @@ window.payposImprimirCierres = async function (cierres) {
           }
 
           if (indice % 10 === 9) {
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await new Promise((resolve) => setTimeout(resolve, 0));
           }
         }
 
@@ -9604,7 +10213,7 @@ window.payposImprimirCierres = async function (cierres) {
         `;
 
         const urlSvg = URL.createObjectURL(
-          new Blob([svg], { type: "image/svg+xml;charset=utf-8" })
+          new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
         );
 
         const imagen = new Image();
@@ -9612,9 +10221,8 @@ window.payposImprimirCierres = async function (cierres) {
         try {
           await new Promise((resolve, reject) => {
             imagen.onload = resolve;
-            imagen.onerror = () => reject(
-              new Error("No se pudo dibujar la hoja.")
-            );
+            imagen.onerror = () =>
+              reject(new Error("No se pudo dibujar la hoja."));
             imagen.src = urlSvg;
           });
 
@@ -9630,12 +10238,10 @@ window.payposImprimirCierres = async function (cierres) {
             throw new Error("No se pudo crear la imagen PNG.");
           }
 
-          contexto.drawImage(
-            imagen, 0, 0, canvas.width, canvas.height
-          );
+          contexto.drawImage(imagen, 0, 0, canvas.width, canvas.height);
 
           const archivo = await new Promise((resolve, reject) => {
-            canvas.toBlob(blob => {
+            canvas.toBlob((blob) => {
               if (blob) resolve(blob);
               else reject(new Error("No se pudo generar el PNG."));
             }, "image/png");
@@ -9645,8 +10251,7 @@ window.payposImprimirCierres = async function (cierres) {
           const enlace = document.createElement("a");
 
           enlace.href = urlPng;
-          enlace.download =
-            `Cierre_Caja_${trabajo.numero}_${fecha.replaceAll("/", "-")}.png`;
+          enlace.download = `Cierre_Caja_${trabajo.numero}_${fecha.replaceAll("/", "-")}.png`;
 
           document.body.appendChild(enlace);
           enlace.click();
@@ -9656,23 +10261,19 @@ window.payposImprimirCierres = async function (cierres) {
 
           canvas.width = 0;
           canvas.height = 0;
-
         } finally {
           URL.revokeObjectURL(urlSvg);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
-      mensaje.textContent =
-        `Se generaron ${trabajos.length} imágenes, una por caja trabajada.`;
-
+      mensaje.textContent = `Se generaron ${trabajos.length} imágenes, una por caja trabajada.`;
     } catch (error) {
       console.error("PayPos · PNG:", error);
 
       mensaje.textContent =
         "No se pudo completar la descarga: " + error.message;
-
     } finally {
       soporte?.remove();
       botonPdfCierre.disabled = false;
@@ -10099,7 +10700,7 @@ window.payposImprimirCierres = async function (cierres) {
 })();
 document.documentElement.classList.toggle(
   "ventas-lenovo",
-  localStorage.getItem("paypos-ventas-lenovo") === "1"
+  localStorage.getItem("paypos-ventas-lenovo") === "1",
 );
 /* Ajuste permanente de Ventas en la Lenovo activada */
 (() => {
