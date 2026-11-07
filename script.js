@@ -3514,14 +3514,18 @@ window.payposTurnoActual = null;
       .trim();
   }
 
-  const categoriasBase = [
-    "Cervezas",
-    "Botellas",
-    "Cócteles",
-    "Sin alcohol",
-    "Combos",
-    "Otros",
-  ];
+ const categoriasBase = [
+  "Cervezas",
+  "Botellas",
+  "Cócteles",
+  "Sin alcohol",
+  "Combos",
+  "Shots",
+  "Vasos de casa",
+  "Cigarros",
+  "Mezcladores",
+  "Otros",
+];
 
   function opcionesCategoriasDisponibles() {
     const valores = [
