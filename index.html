@@ -1,176 +1,180 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,
                initial-scale=1,
                minimum-scale=1,
                maximum-scale=1,
                user-scalable=no,
                viewport-fit=cover,
-               interactive-widget=overlays-content"
-    />
+               interactive-widget=overlays-content" />
 
-    <title>PayPos</title>
-
-
-    <link rel="stylesheet" href="style.css?v=20261105-rombos-v3" />
+  <title>PayPos</title>
+  <link rel="icon" type="image/png" href="/pa.png" />
 
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
-      defer
-    ></script>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css"
-    />
+  <link rel="stylesheet" href="style.css?v=20261107-mixed-payment-balance-v9" />
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"
-      defer
-    ></script>
-    <script src="script.js?v=20261105-limpiar-buscador-v1" defer></script>
-  </head>
 
-  <body>
-    <header class="barra" id="barra">
-      <!-- Fondo y curva animada del menú -->
-      <svg class="superficie" id="superficie" aria-hidden="true">
-        <path id="forma"></path>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js" defer></script>
+  <script src="script.js?v=20261107-mixed-payment-balance-v9" defer></script>
+</head>
+
+<body data-acceso="verificando">
+  <main class="pantalla-acceso" id="acceso-administrador" aria-labelledby="titulo-acceso">
+    <div class="acceso-identidad" aria-hidden="true">
+      <img src="pa.png" alt="" />
+      <p class="acceso-identidad-sello">PUNTO DE VENTA · BOLIVIA</p>
+      <h1>Tu negocio,<br />en movimiento.</h1>
+      <p class="acceso-identidad-nota">
+        Ventas, caja y catálogo en un solo lugar.
+      </p>
+      <div class="acceso-anillos"></div>
+    </div>
+
+    <section class="acceso-contenido">
+      <div class="acceso-marca">
+        <img src="pa.png" alt="PayPos" />
+        <span>PAYPOS</span>
+      </div>
+
+      <div class="acceso-introduccion">
+        <p class="acceso-eyebrow">ACCESO SEGURO</p>
+        <h2 id="titulo-acceso">Acceso a PayPos</h2>
+        <p class="acceso-descripcion">
+          Ingresa con tu cuenta de administrador o cajero.
+        </p>
+      </div>
+
+      <form id="form-acceso">
+        <div class="campo">
+          <label for="admin-correo">Correo</label>
+          <input id="admin-correo" name="email" type="email" placeholder="tu@correo.com" autocomplete="username"
+            required />
+        </div>
+
+        <div class="campo">
+          <label for="admin-clave">Contraseña</label>
+          <div class="campo-password-input">
+            <input id="admin-clave" name="password" type="password" placeholder="Tu contraseña"
+              autocomplete="current-password" required />
+            <button id="mostrar-admin-clave" class="campo-password-toggle" type="button" aria-label="Mostrar contraseña"
+              aria-pressed="false">
+              <svg class="icono-ver-clave" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+              <svg class="icono-ocultar-clave" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                <path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a13.8 13.8 0 0 1-3.2 4.1" />
+                <path d="M6.6 6.6C3.6 8.5 2 12 2 12s3.6 7 10 7c1.5 0 2.9-.4 4.1-1.1" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="boton-principal" id="ingresar-productos">
+          Ingresar
+        </button>
+      </form>
+
+      <p id="estado-acceso" role="status" aria-live="polite">
+        Verificando tu sesión…
+      </p>
+    </section>
+  </main>
+
+  <header class="barra" id="barra">
+    <!-- Fondo y curva animada del menú -->
+    <svg class="superficie" id="superficie" aria-hidden="true">
+      <path id="forma"></path>
+    </svg>
+
+    <nav class="iconos" aria-label="Menú de PayPos">
+      <button class="icono" type="button" data-nombre="Inicio" aria-label="Inicio" aria-pressed="true">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m3 10 9-7 9 7" />
+            <path d="M5 9v11h5v-7h4v7h5V9" />
+          </svg>
+        </span>
+      </button>
+
+      <button class="icono" type="button" data-nombre="Ventas" aria-label="Ventas" aria-pressed="false">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 3h2l3 12h10l3-9H6" />
+            <circle cx="9" cy="20" r="1" />
+            <circle cx="18" cy="20" r="1" />
+          </svg>
+        </span>
+      </button>
+
+      <button class="icono" type="button" data-nombre="Productos" aria-label="Productos" aria-pressed="false">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="m12 3 9 5v8l-9 5-9-5V8z" />
+            <path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5" />
+          </svg>
+        </span>
+      </button>
+
+      <button class="icono" type="button" data-nombre="Cajas" aria-label="Cajas" aria-pressed="false">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="14" rx="3" />
+            <path d="M16 10h5v5h-5a2.5 2.5 0 0 1 0-5Z" />
+            <path d="M7 9h4" />
+            <circle cx="17" cy="12.5" r=".6" />
+          </svg>
+        </span>
+      </button>
+
+      <button class="icono" type="button" data-nombre="Configuración" aria-label="Configuración" aria-pressed="false">
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M4 7h9m4 0h3M4 17h3m4 0h9" />
+            <circle cx="15" cy="7" r="2" />
+            <circle cx="9" cy="17" r="2" />
+          </svg>
+        </span>
+      </button>
+    </nav>
+    <div class="buscador-inicio" role="search">
+      <svg class="buscador-inicio-lupa" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 4.5 4.5" />
       </svg>
 
-      <nav class="iconos" aria-label="Menú de PayPos">
-        <button
-          class="icono"
-          type="button"
-          data-nombre="Inicio"
-          aria-label="Inicio"
-          aria-pressed="true"
-        >
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="m3 10 9-7 9 7" />
-              <path d="M5 9v11h5v-7h4v7h5V9" />
-            </svg>
-          </span>
-        </button>
+      <input id="buscar-inicio" type="search" placeholder="Buscar productos..." aria-label="Buscar productos en Inicio"
+        autocomplete="off" spellcheck="false" />
 
-        <button
-          class="icono"
-          type="button"
-          data-nombre="Ventas"
-          aria-label="Ventas"
-          aria-pressed="false"
-        >
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M3 3h2l3 12h10l3-9H6" />
-              <circle cx="9" cy="20" r="1" />
-              <circle cx="18" cy="20" r="1" />
-            </svg>
-          </span>
-        </button>
+      <div class="buscador-inicio-filtro" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M4 7h10M18 7h2" />
+          <circle cx="16" cy="7" r="2" />
 
-        <button
-          class="icono"
-          type="button"
-          data-nombre="Productos"
-          aria-label="Productos"
-          aria-pressed="false"
-        >
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="m12 3 9 5v8l-9 5-9-5V8z" />
-              <path d="m3 8 9 5 9-5M12 13v8M7.5 5.5l9 5" />
-            </svg>
-          </span>
-        </button>
+          <path d="M4 17h2M10 17h10" />
+          <circle cx="8" cy="17" r="2" />
 
-        <button
-          class="icono"
-          type="button"
-          data-nombre="Cajas"
-          aria-label="Cajas"
-          aria-pressed="false"
-        >
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <rect x="3" y="5" width="18" height="14" rx="3" />
-              <path d="M16 10h5v5h-5a2.5 2.5 0 0 1 0-5Z" />
-              <path d="M7 9h4" />
-              <circle cx="17" cy="12.5" r=".6" />
-            </svg>
-          </span>
-        </button>
-
-        <button
-          class="icono"
-          type="button"
-          data-nombre="Configuración"
-          aria-label="Configuración"
-          aria-pressed="false"
-        >
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M4 7h9m4 0h3M4 17h3m4 0h9" />
-              <circle cx="15" cy="7" r="2" />
-              <circle cx="9" cy="17" r="2" />
-            </svg>
-          </span>
-        </button>
-      </nav>
-      <div class="buscador-inicio" role="search">
-        <svg
-          class="buscador-inicio-lupa"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <circle cx="10.5" cy="10.5" r="6.5" />
-          <path d="m16 16 4.5 4.5" />
+          <path d="M4 12h5M13 12h7" />
+          <circle cx="11" cy="12" r="2" />
         </svg>
-
-        <input
-          id="buscar-inicio"
-          type="search"
-          placeholder="Buscar productos..."
-          aria-label="Buscar productos en Inicio"
-          autocomplete="off"
-          spellcheck="false"
-        />
-
-        <div class="buscador-inicio-filtro" aria-hidden="true">
-          <svg viewBox="0 0 24 24">
-            <path d="M4 7h10M18 7h2" />
-            <circle cx="16" cy="7" r="2" />
-
-            <path d="M4 17h2M10 17h10" />
-            <circle cx="8" cy="17" r="2" />
-
-            <path d="M4 12h5M13 12h7" />
-            <circle cx="11" cy="12" r="2" />
-          </svg>
-        </div>
       </div>
-      <div class="detalle" id="detalle" aria-hidden="true">
-        <span id="etiqueta">Inicio</span>
-      </div>
-    </header>
-    <aside
-      id="panel-pedido"
-      class="panel-pedido"
-      aria-labelledby="titulo-pedido"
-    >
-      <svg
-        class="pedido-silueta"
-        viewBox="0 0 320 800"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <path
-          d="
+    </div>
+    <div class="detalle" id="detalle" aria-hidden="true">
+      <span id="etiqueta">Inicio</span>
+    </div>
+  </header>
+  <aside id="panel-pedido" class="panel-pedido" aria-labelledby="titulo-pedido">
+    <svg class="pedido-silueta" viewBox="0 0 320 800" preserveAspectRatio="none" aria-hidden="true">
+      <path d="
         M 0 0
 
         Q 0 8, 16 12
@@ -184,983 +188,646 @@
         Q 0 792, 0 800
 
         Z
-      "
-        ></path>
-      </svg>
-      <div class="pedido-contenido">
-        <header class="pedido-cabecera">
-          <p class="pedido-etiqueta">PAYPOS</p>
+      "></path>
+    </svg>
+    <div class="pedido-contenido">
+      <header class="pedido-cabecera">
+        <p class="pedido-etiqueta">PAYPOS</p>
 
-          <div class="pedido-titulo-fila">
-            <h2 id="titulo-pedido">Tu pedido</h2>
-            <span id="pedido-contador">0</span>
-          </div>
-        </header>
-
-        <div id="pedido-lista" class="pedido-lista"></div>
-
-        <footer class="pedido-resumen">
-          <div class="pedido-opciones">
-            <button
-              id="abrir-descuento"
-              class="pedido-opcion"
-              type="button"
-              aria-haspopup="dialog"
-              disabled
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 19 19 5" />
-                <circle cx="7" cy="7" r="3" />
-                <circle cx="17" cy="17" r="3" />
-              </svg>
-              <span>Descuento</span>
-            </button>
-
-            <button
-              id="abrir-nota"
-              class="pedido-opcion"
-              type="button"
-              aria-haspopup="dialog"
-              disabled
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M14 3H5v18h14V8Z" />
-                <path d="M14 3v5h5M8 12h8M8 16h5" />
-              </svg>
-              <span>Nota</span>
-            </button>
-          </div>
-
-          <div id="pedido-desglose" hidden>
-            <div class="pedido-ajuste-fila">
-              <span>Subtotal</span>
-              <span id="pedido-subtotal">Bs 0</span>
-            </div>
-
-            <div class="pedido-ajuste-fila">
-              <span id="pedido-descuento-etiqueta">Descuento</span>
-              <span id="pedido-descuento-monto">− Bs 0</span>
-            </div>
-          </div>
-
-          <p id="pedido-nota-indicador" class="pedido-nota-indicador" hidden>
-            Nota guardada · pulsa Nota para editar
-          </p>
-
-          <div class="pedido-total-fila">
-            <span>Total</span>
-            <strong id="pedido-total">Bs 0</strong>
-          </div>
-          <button
-            id="cobrar-pedido"
-            class="pedido-cobrar"
-            type="button"
-            disabled
-          >
-            <span>Cobrar</span>
-            <strong id="cobrar-pedido-total">Bs 0</strong>
-          </button>
-          <button
-            id="vaciar-pedido"
-            class="pedido-vaciar"
-            type="button"
-            disabled
-          >
-            Vaciar pedido
-          </button>
-        </footer>
-      </div>
-
-      <span
-        id="pedido-anuncio"
-        class="pedido-solo-lector"
-        role="status"
-        aria-live="polite"
-      ></span>
-    </aside>
-    <main class="area-paginas" id="area-paginas">
-      <!-- ================= INICIO ================= -->
-      <section
-        class="pagina pagina-activa"
-        id="pagina-inicio"
-        aria-labelledby="titulo-productos"
-      >
-        <div class="contenido-pagina inicio">
-          <div class="vitrina-cabecera">
-            <div>
-              <p class="vitrina-etiqueta">PAYPOS · CARTA</p>
-              <h1 id="titulo-productos">Nuestros productos</h1>
-            </div>
-
-            <span class="vitrina-nota"> Precios en bolivianos </span>
-          </div>
-
-          <p id="estado-catalogo" role="status">
-            Inicia sesión para ver el catálogo.
-          </p>
-
-          <div class="vitrina" id="catalogo"></div>
+        <div class="pedido-titulo-fila">
+          <h2 id="titulo-pedido">Tu pedido</h2>
+          <span id="pedido-contador">0</span>
         </div>
-      </section>
-      <!-- ================= VENTAS ================= -->
+      </header>
 
-      <section class="pagina pagina-ventas" id="pagina-ventas" hidden inert>
-        <div class="ventas-layout">
-          <!-- ======================================
+      <div id="pedido-lista" class="pedido-lista"></div>
+
+      <footer class="pedido-resumen">
+        <div class="pedido-opciones">
+          <button id="abrir-descuento" class="pedido-opcion" type="button" aria-haspopup="dialog" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 19 19 5" />
+              <circle cx="7" cy="7" r="3" />
+              <circle cx="17" cy="17" r="3" />
+            </svg>
+            <span>Descuento</span>
+          </button>
+
+          <button id="abrir-nota" class="pedido-opcion" type="button" aria-haspopup="dialog" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 3H5v18h14V8Z" />
+              <path d="M14 3v5h5M8 12h8M8 16h5" />
+            </svg>
+            <span>Nota</span>
+          </button>
+        </div>
+
+        <div id="pedido-desglose" hidden>
+          <div class="pedido-ajuste-fila">
+            <span>Subtotal</span>
+            <span id="pedido-subtotal">Bs 0</span>
+          </div>
+
+          <div class="pedido-ajuste-fila">
+            <span id="pedido-descuento-etiqueta">Descuento</span>
+            <span id="pedido-descuento-monto">− Bs 0</span>
+          </div>
+        </div>
+
+        <p id="pedido-nota-indicador" class="pedido-nota-indicador" hidden>
+          Nota guardada · pulsa Nota para editar
+        </p>
+
+        <div class="pedido-total-fila">
+          <span>Total</span>
+          <strong id="pedido-total">Bs 0</strong>
+        </div>
+        <button id="cobrar-pedido" class="pedido-cobrar" type="button" disabled>
+          <span>Cobrar</span>
+          <strong id="cobrar-pedido-total">Bs 0</strong>
+        </button>
+        <button id="vaciar-pedido" class="pedido-vaciar" type="button" disabled>
+          Vaciar pedido
+        </button>
+      </footer>
+    </div>
+
+    <span id="pedido-anuncio" class="pedido-solo-lector" role="status" aria-live="polite"></span>
+  </aside>
+  <main class="area-paginas" id="area-paginas">
+    <!-- ================= INICIO ================= -->
+    <section class="pagina pagina-activa" id="pagina-inicio" aria-labelledby="titulo-productos">
+      <div class="contenido-pagina inicio">
+        <div class="vitrina-cabecera">
+          <div>
+            <p class="vitrina-etiqueta">PAYPOS · CARTA</p>
+            <h1 id="titulo-productos">Nuestros productos</h1>
+          </div>
+
+          <span class="vitrina-nota"> Precios en bolivianos </span>
+        </div>
+
+        <p id="estado-catalogo" role="status">
+          Inicia sesión para ver el catálogo.
+        </p>
+
+        <div class="vitrina" id="catalogo"></div>
+      </div>
+    </section>
+    <!-- ================= VENTAS ================= -->
+
+    <section class="pagina pagina-ventas" id="pagina-ventas" hidden inert>
+      <div class="ventas-layout">
+        <!-- ======================================
                IZQUIERDA · CAJAS
           ======================================= -->
 
-          <section class="ventas-cajas-area">
-            <div id="ventas-pila-cajas" class="ventas-pila-cajas">
-              <!-- JS crea aquí las cajas de atrás -->
+        <section class="ventas-cajas-area">
+          <div id="ventas-pila-cajas" class="ventas-pila-cajas">
+            <!-- JS crea aquí las cajas de atrás -->
 
-              <div class="ventas-caja-principal">
-                <header class="ventas-caja-cabecera">
-                  <h2 id="ventas-caja-titulo">Total de caja</h2>
+            <div class="ventas-caja-principal">
+              <header class="ventas-caja-cabecera">
+                <h2 id="ventas-caja-titulo">Total de caja</h2>
 
-                  <button
-                    id="ventas-recargar"
-                    class="ventas-recargar"
-                    type="button"
-                    aria-label="Actualizar ventas"
-                    title="Actualizar ventas"
-                  >
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M20 11a8 8 0 0 0-14.9-3L3 11" />
-                      <path d="M3 5v6h6" />
-                      <path d="M4 13a8 8 0 0 0 14.9 3L21 13" />
-                      <path d="M21 19v-6h-6" />
-                    </svg>
-                  </button>
-                </header>
-
-                <button
-                  id="ventas-caja-selector"
-                  class="ventas-caja-selector"
-                  type="button"
-                  aria-label="Ver total general"
-                  aria-pressed="true"
-                >
+                <button id="ventas-recargar" class="ventas-recargar" type="button" aria-label="Actualizar ventas"
+                  title="Actualizar ventas">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M5 8h14v11H5z" />
-                    <path d="M8 8V5h8v3" />
-                    <path d="M8 12h2M14 12h2M8 16h8" />
-                  </svg>
-
-                  <strong id="ventas-caja-nombre"> Caja </strong>
-
-                  <svg
-                    class="ventas-selector-flecha"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path d="m7 9 5 5 5-5" />
+                    <path d="M20 11a8 8 0 0 0-14.9-3L3 11" />
+                    <path d="M3 5v6h6" />
+                    <path d="M4 13a8 8 0 0 0 14.9 3L21 13" />
+                    <path d="M21 19v-6h-6" />
                   </svg>
                 </button>
+              </header>
 
-                <div class="ventas-total-centro">
-                  <span> Total recaudado </span>
+              <button id="ventas-caja-selector" class="ventas-caja-selector" type="button"
+                aria-label="Ver total general" aria-pressed="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 8h14v11H5z" />
+                  <path d="M8 8V5h8v3" />
+                  <path d="M8 12h2M14 12h2M8 16h8" />
+                </svg>
 
-                  <small
-                    id="ventas-resumen-general-periodo"
-                    class="ventas-total-periodo"
-                    hidden
-                  ></small>
+                <strong id="ventas-caja-nombre"> Caja </strong>
 
-                  <div class="ventas-total-numero">
-                    <strong id="ventas-total"> 0 </strong>
+                <svg class="ventas-selector-flecha" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m7 9 5 5 5-5" />
+                </svg>
+              </button>
 
-                    <small>Bs</small>
+              <div class="ventas-total-centro">
+                <span> Total recaudado </span>
+
+                <small id="ventas-resumen-general-periodo" class="ventas-total-periodo" hidden></small>
+
+                <div class="ventas-total-numero">
+                  <strong id="ventas-total"> 0 </strong>
+
+                  <small>Bs</small>
+                </div>
+
+                <p id="ventas-resumen-general-estado" class="ventas-resumen-general-estado" role="status" hidden></p>
+              </div>
+
+              <div class="ventas-metodos">
+                <!-- EFECTIVO -->
+
+                <article class="ventas-metodo">
+                  <div class="ventas-metodo-icono">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M4 7h14a2 2 0 0 1 2 2v10H4z" />
+                      <path d="M4 7 15 4v3" />
+                      <path d="M16 12h5v4h-5a2 2 0 0 1 0-4z" />
+                    </svg>
                   </div>
 
-                  <p
-                    id="ventas-resumen-general-estado"
-                    class="ventas-resumen-general-estado"
-                    role="status"
-                    hidden
-                  ></p>
-                </div>
+                  <strong> Efectivo </strong>
 
-                <div class="ventas-metodos">
-                  <!-- EFECTIVO -->
+                  <span id="ventas-efectivo"> Bs 0 </span>
+                </article>
 
-                  <article class="ventas-metodo">
-                    <div class="ventas-metodo-icono">
-                      <svg viewBox="0 0 24 24">
-                        <path d="M4 7h14a2 2 0 0 1 2 2v10H4z" />
-                        <path d="M4 7 15 4v3" />
-                        <path d="M16 12h5v4h-5a2 2 0 0 1 0-4z" />
-                      </svg>
-                    </div>
+                <!-- QR -->
 
-                    <strong> Efectivo </strong>
+                <article class="ventas-metodo">
+                  <div class="ventas-metodo-icono">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="4" y="4" width="5" height="5" />
+                      <rect x="15" y="4" width="5" height="5" />
+                      <rect x="4" y="15" width="5" height="5" />
+                      <path d="M15 15h2v2h-2zM19 15h1v3M15 19h3M20 20h-2" />
+                    </svg>
+                  </div>
 
-                    <span id="ventas-efectivo"> Bs 0 </span>
-                  </article>
+                  <strong> QR </strong>
 
-                  <!-- QR -->
+                  <span id="ventas-qr"> Bs 0 </span>
+                </article>
 
-                  <article class="ventas-metodo">
-                    <div class="ventas-metodo-icono">
-                      <svg viewBox="0 0 24 24">
-                        <rect x="4" y="4" width="5" height="5" />
-                        <rect x="15" y="4" width="5" height="5" />
-                        <rect x="4" y="15" width="5" height="5" />
-                        <path d="M15 15h2v2h-2zM19 15h1v3M15 19h3M20 20h-2" />
-                      </svg>
-                    </div>
+                <!-- TARJETA -->
 
-                    <strong> QR </strong>
+                <article class="ventas-metodo">
+                  <div class="ventas-metodo-icono">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <path d="M3 10h18M7 15h4" />
+                    </svg>
+                  </div>
 
-                    <span id="ventas-qr"> Bs 0 </span>
-                  </article>
+                  <strong> Tarjeta </strong>
 
-                  <!-- TARJETA -->
-
-                  <article class="ventas-metodo">
-                    <div class="ventas-metodo-icono">
-                      <svg viewBox="0 0 24 24">
-                        <rect x="3" y="5" width="18" height="14" rx="2" />
-                        <path d="M3 10h18M7 15h4" />
-                      </svg>
-                    </div>
-
-                    <strong> Tarjeta </strong>
-
-                    <span id="ventas-tarjeta"> Bs 0 </span>
-                  </article>
-                </div>
+                  <span id="ventas-tarjeta"> Bs 0 </span>
+                </article>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          <!-- ======================================
+        <!-- ======================================
                DERECHA · VENTAS RECIENTES
           ======================================= -->
 
-          <section class="ventas-recientes">
-            <header class="ventas-recientes-cabecera">
-              <h2>Ventas recientes</h2>
+        <section class="ventas-recientes">
+          <header class="ventas-recientes-cabecera">
+            <h2>Ventas recientes</h2>
 
-              <div class="ventas-filtros">
-                <button
-                  id="ventas-ver-todas"
-                  class="ventas-filtro activo"
-                  type="button"
-                >
-                  Ver todas
-                </button>
+            <div class="ventas-filtros">
+              <button id="ventas-ver-todas" class="ventas-filtro activo" type="button">
+                Ver todas
+              </button>
 
-                <button id="ventas-hoy" class="ventas-filtro" type="button">
-                  Hoy
-                </button>
+              <button id="ventas-hoy" class="ventas-filtro" type="button">
+                Hoy
+              </button>
+            </div>
+          </header>
+
+          <p id="ventas-estado" class="ventas-estado" role="status"></p>
+
+          <div id="ventas-lista" class="ventas-lista"></div>
+        </section>
+      </div>
+    </section>
+    <!-- ================= CAJAS ================= -->
+    <section class="pagina" id="pagina-cajas" aria-labelledby="titulo-cajas" hidden inert>
+      <div class="contenido-pagina pagina-cajas-contenido">
+        <header class="cajas-cabecera">
+          <div>
+            <h1 id="titulo-cajas">Cajas</h1>
+            <p class="cajas-descripcion">
+              Abre la caja asignada a tu usuario para comenzar a vender.
+            </p>
+          </div>
+
+          <div class="cajas-cabecera-acciones">
+            <button id="abrir-comandas" class="boton-comandas" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
+                <path d="M9 8h6M9 12h6M9 16h4" />
+              </svg>
+
+              <span>Comandas</span>
+            </button>
+
+            <div id="cajas-usuario" class="cajas-usuario"></div>
+          </div>
+        </header>
+
+        <div id="cajas-lista" class="cajas-lista">
+          <article class="caja-card" data-caja-numero="1">
+            <div class="caja-card-numero">01</div>
+
+            <div class="caja-card-info">
+              <span class="caja-card-etiqueta">CAJA</span>
+              <h2>Caja 1</h2>
+              <p data-caja-estado>No disponible</p>
+            </div>
+
+            <button type="button" class="caja-card-accion" data-caja-accion disabled>
+              No asignada
+            </button>
+          </article>
+
+          <article class="caja-card" data-caja-numero="2">
+            <div class="caja-card-numero">02</div>
+
+            <div class="caja-card-info">
+              <span class="caja-card-etiqueta">CAJA</span>
+              <h2>Caja 2</h2>
+              <p data-caja-estado>No disponible</p>
+            </div>
+
+            <button type="button" class="caja-card-accion" data-caja-accion disabled>
+              No asignada
+            </button>
+          </article>
+
+          <article class="caja-card" data-caja-numero="3">
+            <div class="caja-card-numero">03</div>
+
+            <div class="caja-card-info">
+              <span class="caja-card-etiqueta">CAJA</span>
+              <h2>Caja 3</h2>
+              <p data-caja-estado>No disponible</p>
+            </div>
+
+            <button type="button" class="caja-card-accion" data-caja-accion disabled>
+              No asignada
+            </button>
+          </article>
+
+          <article class="caja-card" data-caja-numero="4">
+            <div class="caja-card-numero">04</div>
+
+            <div class="caja-card-info">
+              <span class="caja-card-etiqueta">CAJA</span>
+              <h2>Caja 4</h2>
+              <p data-caja-estado>No disponible</p>
+            </div>
+
+            <button type="button" class="caja-card-accion" data-caja-accion disabled>
+              No asignada
+            </button>
+          </article>
+        </div>
+
+        <section id="caja-apertura" class="caja-apertura pantalla-apertura-caja" hidden inert>
+          <div class="apertura-caja-contenido">
+            <header class="apertura-caja-cabecera">
+              <button id="cerrar-apertura-caja" class="apertura-caja-volver" type="button">
+                Volver
+              </button>
+
+              <strong id="apertura-caja-total"> Bs 0 </strong>
+            </header>
+
+            <div class="apertura-caja-cuerpo">
+              <div class="apertura-cortes">
+                <label class="apertura-corte">
+                  <span>Bs 200</span>
+                  <input type="number" inputmode="numeric" min="0" step="1" value="0" data-corte-apertura="200" />
+                </label>
+
+                <label class="apertura-corte">
+                  <span>Bs 100</span>
+                  <input type="number" inputmode="numeric" min="0" step="1" value="0" data-corte-apertura="100" />
+                </label>
+
+                <label class="apertura-corte">
+                  <span>Bs 50</span>
+                  <input type="number" inputmode="numeric" min="0" step="1" value="0" data-corte-apertura="50" />
+                </label>
+
+                <label class="apertura-corte">
+                  <span>Bs 20</span>
+                  <input type="number" inputmode="numeric" min="0" step="1" value="0" data-corte-apertura="20" />
+                </label>
+
+                <label class="apertura-corte">
+                  <span>Bs 10</span>
+                  <input type="number" inputmode="numeric" min="0" step="1" value="0" data-corte-apertura="10" />
+                </label>
+              </div>
+
+              <!-- Este valor lo calcula automáticamente JS -->
+              <input id="caja-fondo-inicial" type="hidden" value="0" />
+
+              <!-- Se mantienen porque tu JS actual los utiliza -->
+              <div id="caja-fondo-bloque" hidden></div>
+              <h2 id="caja-apertura-titulo" hidden></h2>
+              <p id="caja-apertura-estado" hidden></p>
+            </div>
+
+            <footer class="apertura-caja-pie">
+              <p id="caja-mensaje" class="apertura-caja-mensaje" role="status" aria-live="polite"></p>
+
+              <button id="abrir-caja" class="apertura-caja-confirmar" type="button">
+                Abrir caja
+              </button>
+            </footer>
+          </div>
+        </section>
+      </div>
+    </section>
+    <!-- ================ CIERRE DE CAJAS ================ -->
+
+    <section id="caja-cierre" class="caja-apertura pantalla-apertura-caja cierre-jornada" hidden inert
+      aria-labelledby="cierre-jornada-titulo">
+      <div class="apertura-caja-contenido cierre-jornada-contenido">
+
+        <header class="apertura-caja-cabecera cierre-jornada-cabecera">
+          <button id="cerrar-pantalla-cierre" class="apertura-caja-volver" type="button">
+            Volver
+          </button>
+
+          <div class="cierre-jornada-identidad">
+            <p class="cierre-jornada-etiqueta">PAYPOS · RENDICIÓN</p>
+            <h1 id="cierre-jornada-titulo">Cierre de cajas</h1>
+            <p id="cierre-jornada-fecha">Jornada pendiente de cargar</p>
+          </div>
+
+          <div class="cierre-jornada-total">
+            <span>Rendición total</span>
+            <strong id="cierre-jornada-total-real">—</strong>
+          </div>
+        </header>
+
+        <nav class="cierre-jornada-pestanas" aria-label="Vistas del cierre">
+          <button type="button" data-cierre-vista="general" aria-pressed="true" disabled>
+            General
+          </button>
+
+          <button type="button" data-cierre-vista="1" aria-pressed="false" disabled>
+            Caja 1
+          </button>
+
+          <button type="button" data-cierre-vista="2" aria-pressed="false" disabled>
+            Caja 2
+          </button>
+
+          <button type="button" data-cierre-vista="3" aria-pressed="false" disabled>
+            Caja 3
+          </button>
+
+          <button type="button" data-cierre-vista="4" aria-pressed="false" disabled>
+            Caja 4
+          </button>
+        </nav>
+
+        <div class="cierre-jornada-cuerpo">
+
+          <section id="cierre-vista-general" class="cierre-hoja" aria-labelledby="cierre-general-titulo">
+            <header class="cierre-hoja-cabecera">
+              <div>
+                <h2 id="cierre-general-titulo">Resumen de las cuatro cajas</h2>
+                <p>Conteo real, ventas de PayPos y diferencias.</p>
               </div>
             </header>
 
-            <p id="ventas-estado" class="ventas-estado" role="status"></p>
+            <div class="cierre-tabla-contenedor" role="region" aria-label="Resumen general del cierre" tabindex="0">
+              <table class="cierre-tabla cierre-tabla-general">
+                <thead>
+                  <tr>
+                    <th scope="col">Caja</th>
+                    <th scope="col">Método</th>
+                    <th scope="col">Real</th>
+                    <th scope="col">APP</th>
+                    <th scope="col">Diferencia</th>
+                    <th scope="col">Estado</th>
+                  </tr>
+                </thead>
 
-            <div id="ventas-lista" class="ventas-lista"></div>
-          </section>
-        </div>
-      </section>
-      <!-- ================= CAJAS ================= -->
-      <section
-        class="pagina"
-        id="pagina-cajas"
-        aria-labelledby="titulo-cajas"
-        hidden
-        inert
-      >
-        <div class="contenido-pagina pagina-cajas-contenido">
-          <header class="cajas-cabecera">
-            <div>
-              <h1 id="titulo-cajas">Cajas</h1>
-              <p class="cajas-descripcion">
-                Abre la caja asignada a tu usuario para comenzar a vender.
-              </p>
+                <tbody id="cierre-general-filas">
+                  <tr>
+                    <td colspan="6">
+                      Los turnos se cargarán al conectar esta pantalla.
+                    </td>
+                  </tr>
+                </tbody>
+
+                <tfoot>
+                  <tr>
+                    <th scope="row" colspan="2">Total de los métodos</th>
+                    <td id="cierre-general-real">—</td>
+                    <td id="cierre-general-app">—</td>
+                    <td id="cierre-general-diferencia">—</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
 
-            <div class="cajas-cabecera-acciones">
-              <button id="abrir-comandas" class="boton-comandas" type="button">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z" />
-                  <path d="M9 8h6M9 12h6M9 16h4" />
-                </svg>
-
-                <span>Comandas</span>
-              </button>
-
-              <div id="cajas-usuario" class="cajas-usuario"></div>
-            </div>
-          </header>
-
-          <div id="cajas-lista" class="cajas-lista">
-            <article class="caja-card" data-caja-numero="1">
-              <div class="caja-card-numero">01</div>
-
-              <div class="caja-card-info">
-                <span class="caja-card-etiqueta">CAJA</span>
-                <h2>Caja 1</h2>
-                <p data-caja-estado>No disponible</p>
+            <div class="cierre-general-rendicion">
+              <div>
+                <span>Extras</span>
+                <strong id="cierre-general-extras">—</strong>
               </div>
 
-              <button
-                type="button"
-                class="caja-card-accion"
-                data-caja-accion
-                disabled
-              >
-                No asignada
-              </button>
-            </article>
-
-            <article class="caja-card" data-caja-numero="2">
-              <div class="caja-card-numero">02</div>
-
-              <div class="caja-card-info">
-                <span class="caja-card-etiqueta">CAJA</span>
-                <h2>Caja 2</h2>
-                <p data-caja-estado>No disponible</p>
+              <div>
+                <span>Rendición con extras</span>
+                <strong id="cierre-general-rendicion">—</strong>
               </div>
-
-              <button
-                type="button"
-                class="caja-card-accion"
-                data-caja-accion
-                disabled
-              >
-                No asignada
-              </button>
-            </article>
-
-            <article class="caja-card" data-caja-numero="3">
-              <div class="caja-card-numero">03</div>
-
-              <div class="caja-card-info">
-                <span class="caja-card-etiqueta">CAJA</span>
-                <h2>Caja 3</h2>
-                <p data-caja-estado>No disponible</p>
-              </div>
-
-              <button
-                type="button"
-                class="caja-card-accion"
-                data-caja-accion
-                disabled
-              >
-                No asignada
-              </button>
-            </article>
-
-            <article class="caja-card" data-caja-numero="4">
-              <div class="caja-card-numero">04</div>
-
-              <div class="caja-card-info">
-                <span class="caja-card-etiqueta">CAJA</span>
-                <h2>Caja 4</h2>
-                <p data-caja-estado>No disponible</p>
-              </div>
-
-              <button
-                type="button"
-                class="caja-card-accion"
-                data-caja-accion
-                disabled
-              >
-                No asignada
-              </button>
-            </article>
-          </div>
-
-          <section
-            id="caja-apertura"
-            class="caja-apertura pantalla-apertura-caja"
-            hidden
-            inert
-          >
-            <div class="apertura-caja-contenido">
-              <header class="apertura-caja-cabecera">
-                <button
-                  id="cerrar-apertura-caja"
-                  class="apertura-caja-volver"
-                  type="button"
-                >
-                  Volver
-                </button>
-
-                <strong id="apertura-caja-total"> Bs 0 </strong>
-              </header>
-
-              <div class="apertura-caja-cuerpo">
-                <div class="apertura-cortes">
-                  <label class="apertura-corte">
-                    <span>Bs 200</span>
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      step="1"
-                      value="0"
-                      data-corte-apertura="200"
-                    />
-                  </label>
-
-                  <label class="apertura-corte">
-                    <span>Bs 100</span>
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      step="1"
-                      value="0"
-                      data-corte-apertura="100"
-                    />
-                  </label>
-
-                  <label class="apertura-corte">
-                    <span>Bs 50</span>
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      step="1"
-                      value="0"
-                      data-corte-apertura="50"
-                    />
-                  </label>
-
-                  <label class="apertura-corte">
-                    <span>Bs 20</span>
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      step="1"
-                      value="0"
-                      data-corte-apertura="20"
-                    />
-                  </label>
-
-                  <label class="apertura-corte">
-                    <span>Bs 10</span>
-                    <input
-                      type="number"
-                      inputmode="numeric"
-                      min="0"
-                      step="1"
-                      value="0"
-                      data-corte-apertura="10"
-                    />
-                  </label>
-                </div>
-
-                <!-- Este valor lo calcula automáticamente JS -->
-                <input id="caja-fondo-inicial" type="hidden" value="0" />
-
-                <!-- Se mantienen porque tu JS actual los utiliza -->
-                <div id="caja-fondo-bloque" hidden></div>
-                <h2 id="caja-apertura-titulo" hidden></h2>
-                <p id="caja-apertura-estado" hidden></p>
-              </div>
-
-              <footer class="apertura-caja-pie">
-                <p
-                  id="caja-mensaje"
-                  class="apertura-caja-mensaje"
-                  role="status"
-                  aria-live="polite"
-                ></p>
-
-                <button
-                  id="abrir-caja"
-                  class="apertura-caja-confirmar"
-                  type="button"
-                >
-                  Abrir caja
-                </button>
-              </footer>
             </div>
           </section>
+
+          <!-- Aquí se generarán las cuatro hojas con el formato del Excel. -->
+          <div id="cierre-hojas-cajas" hidden></div>
+
         </div>
-      </section>
-      <!-- ================ CIERRE DE CAJAS ================ -->
 
-      <section
-        id="caja-cierre"
-        class="caja-apertura pantalla-apertura-caja cierre-jornada"
-        hidden
-        inert
-        aria-labelledby="cierre-jornada-titulo"
-      >
-        <div class="apertura-caja-contenido cierre-jornada-contenido">
+        <footer class="apertura-caja-pie cierre-jornada-pie">
+          <div>
+            <p id="cierre-jornada-mensaje" role="status" aria-live="polite">
+              Estamos preparando la nueva pantalla de cierre.
+            </p>
 
-          <header class="apertura-caja-cabecera cierre-jornada-cabecera">
-            <button
-              id="cerrar-pantalla-cierre"
-              class="apertura-caja-volver"
-              type="button"
-            >
-              Volver
-            </button>
-
-            <div class="cierre-jornada-identidad">
-              <p class="cierre-jornada-etiqueta">PAYPOS · RENDICIÓN</p>
-              <h1 id="cierre-jornada-titulo">Cierre de cajas</h1>
-              <p id="cierre-jornada-fecha">Jornada pendiente de cargar</p>
-            </div>
-
-            <div class="cierre-jornada-total">
-              <span>Rendición total</span>
-              <strong id="cierre-jornada-total-real">—</strong>
-            </div>
-          </header>
-
-          <nav
-            class="cierre-jornada-pestanas"
-            aria-label="Vistas del cierre"
-          >
-            <button
-              type="button"
-              data-cierre-vista="general"
-              aria-pressed="true"
-              disabled
-            >
-              General
-            </button>
-
-            <button
-              type="button"
-              data-cierre-vista="1"
-              aria-pressed="false"
-              disabled
-            >
-              Caja 1
-            </button>
-
-            <button
-              type="button"
-              data-cierre-vista="2"
-              aria-pressed="false"
-              disabled
-            >
-              Caja 2
-            </button>
-
-            <button
-              type="button"
-              data-cierre-vista="3"
-              aria-pressed="false"
-              disabled
-            >
-              Caja 3
-            </button>
-
-            <button
-              type="button"
-              data-cierre-vista="4"
-              aria-pressed="false"
-              disabled
-            >
-              Caja 4
-            </button>
-          </nav>
-
-          <div class="cierre-jornada-cuerpo">
-
-            <section
-              id="cierre-vista-general"
-              class="cierre-hoja"
-              aria-labelledby="cierre-general-titulo"
-            >
-              <header class="cierre-hoja-cabecera">
-                <div>
-                  <h2 id="cierre-general-titulo">Resumen de las cuatro cajas</h2>
-                  <p>Conteo real, ventas de PayPos y diferencias.</p>
-                </div>
-              </header>
-
-              <div
-                class="cierre-tabla-contenedor"
-                role="region"
-                aria-label="Resumen general del cierre"
-                tabindex="0"
-              >
-                <table class="cierre-tabla cierre-tabla-general">
-                  <thead>
-                    <tr>
-                      <th scope="col">Caja</th>
-                      <th scope="col">Método</th>
-                      <th scope="col">Real</th>
-                      <th scope="col">APP</th>
-                      <th scope="col">Diferencia</th>
-                      <th scope="col">Estado</th>
-                    </tr>
-                  </thead>
-
-                  <tbody id="cierre-general-filas">
-                    <tr>
-                      <td colspan="6">
-                        Los turnos se cargarán al conectar esta pantalla.
-                      </td>
-                    </tr>
-                  </tbody>
-
-                  <tfoot>
-                    <tr>
-                      <th scope="row" colspan="2">Total de los métodos</th>
-                      <td id="cierre-general-real">—</td>
-                      <td id="cierre-general-app">—</td>
-                      <td id="cierre-general-diferencia">—</td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-
-              <div class="cierre-general-rendicion">
-                <div>
-                  <span>Extras</span>
-                  <strong id="cierre-general-extras">—</strong>
-                </div>
-
-                <div>
-                  <span>Rendición con extras</span>
-                  <strong id="cierre-general-rendicion">—</strong>
-                </div>
-              </div>
-            </section>
-
-            <!-- Aquí se generarán las cuatro hojas con el formato del Excel. -->
-            <div id="cierre-hojas-cajas" hidden></div>
-
+            <small>
+              Se imprimirá un comprobante por cada caja cerrada
+              que tenga ventas válidas con monto.
+            </small>
           </div>
 
-          <footer class="apertura-caja-pie cierre-jornada-pie">
-            <div>
-              <p
-                id="cierre-jornada-mensaje"
-                role="status"
-                aria-live="polite"
-              >
-                Estamos preparando la nueva pantalla de cierre.
-              </p>
+          <button id="cierre-jornada-confirmar" class="apertura-caja-confirmar" type="button" disabled>
+            Cerrar cajas
+          </button>
+        </footer>
 
-              <small>
-                Se imprimirá un comprobante por cada caja cerrada
-                que tenga ventas válidas con monto.
-              </small>
-            </div>
-
-            <button
-              id="cierre-jornada-confirmar"
-              class="apertura-caja-confirmar"
-              type="button"
-              disabled
-            >
-              Cerrar cajas
-            </button>
-          </footer>
-
-          <!-- Compatibilidad temporal con el JavaScript del cierre anterior.
+        <!-- Compatibilidad temporal con el JavaScript del cierre anterior.
                Retiraremos este bloque al reemplazar esa lógica. -->
-          <div hidden inert aria-hidden="true">
-            <strong id="cierre-caja-total">Bs 0</strong>
+        <div hidden inert aria-hidden="true">
+          <strong id="cierre-caja-total">Bs 0</strong>
 
-            <input id="cierre-qr" type="number" value="0">
-            <input id="cierre-tarjeta" type="number" value="0">
+          <input id="cierre-qr" type="number" value="0">
+          <input id="cierre-tarjeta" type="number" value="0">
 
-            <input type="number" data-corte-cierre="200" value="0">
-            <input type="number" data-corte-cierre="100" value="0">
-            <input type="number" data-corte-cierre="50" value="0">
-            <input type="number" data-corte-cierre="20" value="0">
-            <input type="number" data-corte-cierre="10" value="0">
+          <input type="number" data-corte-cierre="200" value="0">
+          <input type="number" data-corte-cierre="100" value="0">
+          <input type="number" data-corte-cierre="50" value="0">
+          <input type="number" data-corte-cierre="20" value="0">
+          <input type="number" data-corte-cierre="10" value="0">
 
-            <p id="cierre-caja-mensaje"></p>
+          <p id="cierre-caja-mensaje"></p>
 
-            <button
-              id="confirmar-cierre-caja"
-              type="button"
-              disabled
-            >
-              Cierre anterior
-            </button>
+          <button id="confirmar-cierre-caja" type="button" disabled>
+            Cierre anterior
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================ COMANDAS ================ -->
+
+    <section id="pantalla-comandas" class="pantalla-comandas" hidden inert aria-labelledby="titulo-comandas">
+      <div class="comandas-contenido">
+        <header class="comandas-cabecera">
+          <button id="cerrar-comandas" class="comandas-volver" type="button" aria-label="Volver a Cajas">
+            Volver
+          </button>
+
+          <div class="comandas-titulo">
+            <p>PAYPOS · CAJA</p>
+
+            <h1 id="titulo-comandas">Comandas</h1>
           </div>
 
+          <div class="comandas-buscador" role="search">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" />
+              <path d="m16 16 4.5 4.5" />
+            </svg>
+
+            <span>#</span>
+
+            <input id="buscar-comanda" type="search" inputmode="numeric" placeholder="Buscar orden"
+              aria-label="Buscar comanda por número de orden" autocomplete="off" />
+          </div>
+        </header>
+
+        <div class="comandas-barra-info">
+          <span id="comandas-cantidad"> — </span>
+
+          <button id="recargar-comandas" type="button" aria-label="Actualizar comandas">
+            Actualizar
+          </button>
         </div>
-      </section>
 
-      <!-- ================ COMANDAS ================ -->
+        <p id="estado-comandas" class="estado-comandas" role="status" aria-live="polite"></p>
 
-      <section
-        id="pantalla-comandas"
-        class="pantalla-comandas"
-        hidden
-        inert
-        aria-labelledby="titulo-comandas"
-      >
-        <div class="comandas-contenido">
-          <header class="comandas-cabecera">
-            <button
-              id="cerrar-comandas"
-              class="comandas-volver"
-              type="button"
-              aria-label="Volver a Cajas"
-            >
-              Volver
-            </button>
+        <div id="lista-comandas" class="lista-comandas"></div>
+      </div>
+    </section>
+    <!-- ================ PRODUCTOS ================ -->
+    <section class="pagina" id="pagina-productos" aria-labelledby="titulo-gestion" hidden inert>
+      <div class="contenido-pagina gestion-productos">
+        <header class="gestion-cabecera">
+          <div>
+            <p class="vitrina-etiqueta">PAYPOS · ADMINISTRACIÓN</p>
 
-            <div class="comandas-titulo">
-              <p>PAYPOS · CAJA</p>
+            <h1 id="titulo-gestion">Productos</h1>
 
-              <h1 id="titulo-comandas">Comandas</h1>
-            </div>
-
-            <div class="comandas-buscador" role="search">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="10.5" cy="10.5" r="6.5" />
-                <path d="m16 16 4.5 4.5" />
-              </svg>
-
-              <span>#</span>
-
-              <input
-                id="buscar-comanda"
-                type="search"
-                inputmode="numeric"
-                placeholder="Buscar orden"
-                aria-label="Buscar comanda por número de orden"
-                autocomplete="off"
-              />
-            </div>
-          </header>
-
-          <div class="comandas-barra-info">
-            <span id="comandas-cantidad"> — </span>
-
-            <button
-              id="recargar-comandas"
-              type="button"
-              aria-label="Actualizar comandas"
-            >
-              Actualizar
-            </button>
+            <p class="gestion-descripcion">
+              Tu carta, organizada a tu manera.
+            </p>
           </div>
 
-          <p
-            id="estado-comandas"
-            class="estado-comandas"
-            role="status"
-            aria-live="polite"
-          ></p>
+        </header>
 
-          <div id="lista-comandas" class="lista-comandas"></div>
-        </div>
-      </section>
-      <!-- ================ ANULAR COMANDA ================ -->
-
-      <section
-        id="modal-anular-comanda"
-        class="modal-anular-comanda"
-        hidden
-        inert
-        aria-labelledby="titulo-anular-comanda"
-      >
-        <div class="anular-comanda-panel">
-          <header class="anular-comanda-cabecera">
-            <button
-              id="cancelar-anulacion"
-              class="anular-comanda-volver"
-              type="button"
-            >
-              Volver
-            </button>
-
-            <div>
-              <p>ANULACIÓN</p>
-
-              <h2 id="titulo-anular-comanda">Orden</h2>
-            </div>
-          </header>
-
-          <div class="anular-comanda-cuerpo">
-            <div class="anular-comanda-aviso">
-              Esta venta dejará de contar como venta válida.
-            </div>
-
-            <label class="anular-comanda-campo" for="motivo-anulacion">
-              <span>Motivo</span>
-
-              <textarea
-                id="motivo-anulacion"
-                maxlength="180"
-                rows="4"
-                placeholder="Ej.: producto marcado por error"
-              ></textarea>
-            </label>
-
-            <p
-              id="estado-anulacion"
-              class="estado-anulacion"
-              role="status"
-              aria-live="polite"
-            ></p>
-          </div>
-
-          <footer class="anular-comanda-pie">
-            <button id="confirmar-anulacion" type="button">
-              Anular comanda
-            </button>
-          </footer>
-        </div>
-      </section>
-      <!-- ================ PRODUCTOS ================ -->
-      <section
-        class="pagina"
-        id="pagina-productos"
-        aria-labelledby="titulo-gestion"
-        hidden
-        inert
-      >
-        <div class="contenido-pagina gestion-productos">
-          <header class="gestion-cabecera">
-            <div>
-              <p class="vitrina-etiqueta">PAYPOS · ADMINISTRACIÓN</p>
-
-              <h1 id="titulo-gestion">Productos</h1>
-
-              <p class="gestion-descripcion">
-                Tu carta, organizada a tu manera.
-              </p>
-            </div>
-
-            <button
-              type="button"
-              class="boton-nuevo-producto"
-              id="nuevo-producto"
-              aria-controls="editor-producto"
-              aria-expanded="false"
-              disabled
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                aria-hidden="true"
-              >
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-
-              <span>Añadir producto</span>
-            </button>
-          </header>
-
-          <!-- Acceso integrado en la página, sin modal -->
-          <section
-            class="acceso-administrador"
-            id="acceso-administrador"
-            aria-labelledby="titulo-acceso"
-          >
-            <div class="acceso-introduccion">
-              <h2 id="titulo-acceso">Acceso de administrador</h2>
-              <p>Ingresa para consultar y administrar tus productos.</p>
-            </div>
-
-            <form id="form-acceso">
-              <div class="campo">
-                <label for="admin-correo">Correo</label>
-
-                <input
-                  id="admin-correo"
-                  name="email"
-                  type="email"
-                  placeholder="tu@correo.com"
-                  autocomplete="username"
-                  required
-                />
-              </div>
-
-              <div class="campo">
-                <label for="admin-clave">Contraseña</label>
-
-                <div class="campo-password-input">
-                  <input
-                    id="admin-clave"
-                    name="password"
-                    type="password"
-                    placeholder="Tu contraseña"
-                    autocomplete="current-password"
-                    required
-                  />
-                  <button
-                    id="mostrar-admin-clave"
-                    class="campo-password-toggle"
-                    type="button"
-                    aria-label="Mostrar contraseña"
-                    aria-pressed="false"
-                  >
-                    <svg
-                      class="icono-ver-clave"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    <svg
-                      class="icono-ocultar-clave"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path d="M3 3l18 18" />
-                      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-                      <path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a13.8 13.8 0 0 1-3.2 4.1" />
-                      <path d="M6.6 6.6C3.6 8.5 2 12 2 12s3.6 7 10 7c1.5 0 2.9-.4 4.1-1.1" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                class="boton-principal"
-                id="ingresar-productos"
-              >
-                Ingresar
+        <!-- Herramientas y contenido para el administrador -->
+        <div id="gestion-autorizada" hidden>
+          <section class="selector-vistas-productos" id="selector-vistas-productos"
+            aria-labelledby="titulo-selector-vistas">
+            <header class="selector-vistas-productos-cabecera">
+              <p class="vitrina-etiqueta">GESTIÓN DE PRODUCTOS</p>
+              <h2 id="titulo-selector-vistas">¿Qué quieres revisar?</h2>
+              <p>Elige una opción para comenzar. Puedes volver aquí cuando quieras.</p>
+            </header>
+            <div class="selector-vistas-productos-opciones" role="group" aria-label="Selecciona una sección">
+              <button type="button" class="selector-vistas-productos-boton" data-products-view-button="catalog"
+                aria-pressed="false" aria-controls="panel-catalogo-productos">
+                <span class="opcion-vista-productos-icono" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M4 5.5A1.5 1.5 0 0 1 5.5 4h13A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5v-13Z" />
+                    <path d="M8 4v16M11 8h5M11 12h5M11 16h3" />
+                  </svg>
+                </span>
+                <span class="opcion-vista-productos-texto">
+                  <strong>Catálogo</strong>
+                  <span>Busca y administra tus productos</span>
+                </span>
+                <span class="opcion-vista-productos-flecha" aria-hidden="true">→</span>
               </button>
-            </form>
-
-            <p id="estado-acceso" role="status"></p>
+              <button type="button" class="selector-vistas-productos-boton" data-products-view-button="reports"
+                aria-pressed="false" aria-controls="reporte-ventas-productos">
+                <span class="opcion-vista-productos-icono opcion-vista-productos-icono-reporte" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M4 19.5h16M6.5 16V11M12 16V5M17.5 16v-7" />
+                    <path d="m5 8 5-4 5 3 4-3" />
+                  </svg>
+                </span>
+                <span class="opcion-vista-productos-texto">
+                  <strong>Informes de productos</strong>
+                  <span>Consulta ventas por fecha y categoría</span>
+                </span>
+                <span class="opcion-vista-productos-flecha" aria-hidden="true">→</span>
+              </button>
+            </div>
           </section>
 
-          <!-- Herramientas y contenido para el administrador -->
-          <div id="gestion-autorizada" hidden>
+          <div class="cabecera-vista-productos" id="cabecera-vista-productos" hidden>
+            <button type="button" class="volver-selector-productos" id="volver-selector-productos">
+              <span aria-hidden="true">←</span>
+              Cambiar sección
+            </button>
+            <div class="cabecera-vista-productos-titulo">
+              <span>PRODUCTOS</span>
+              <strong id="titulo-vista-productos-activa"></strong>
+            </div>
+          </div>
+
+          <div class="panel-vista-productos" id="panel-catalogo-productos" data-products-panel="catalog" role="region"
+            aria-labelledby="titulo-listado" hidden inert>
+            <div class="catalogo-cabecera-acciones">
+              <button type="button" class="boton-nuevo-producto" id="nuevo-producto" aria-controls="editor-producto"
+                aria-expanded="false" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                <span>Añadir producto</span>
+              </button>
+            </div>
             <div class="herramientas-productos">
               <div class="buscador-productos">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  aria-hidden="true"
-                >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                  stroke-linecap="round" aria-hidden="true">
                   <circle cx="10.5" cy="10.5" r="6.5" />
                   <path d="m16 16 5 5" />
                 </svg>
 
-                <input
-                  id="buscar-productos"
-                  type="search"
-                  placeholder="Buscar por nombre…"
-                  aria-label="Buscar productos por nombre"
-                  autocomplete="off"
-                />
+                <input id="buscar-productos" type="search" placeholder="Buscar por nombre…"
+                  aria-label="Buscar productos por nombre" autocomplete="off" />
               </div>
 
               <div class="filtro-productos">
@@ -1172,6 +839,7 @@
                   <option>Botellas</option>
                   <option>Cócteles</option>
                   <option>Sin alcohol</option>
+                  <option>Combos</option>
                   <option>Otros</option>
                 </select>
               </div>
@@ -1179,10 +847,7 @@
 
             <div class="gestion-distribucion">
               <!-- Lista con foto, nombre, precio y acción Editar -->
-              <section
-                class="lista-productos-panel"
-                aria-labelledby="titulo-listado"
-              >
+              <section class="lista-productos-panel" aria-labelledby="titulo-listado">
                 <div class="lista-productos-cabecera">
                   <h2 id="titulo-listado">Tu catálogo</h2>
                   <span id="contador-productos" role="status">—</span>
@@ -1194,12 +859,7 @@
               </section>
 
               <!-- Formulario dentro de la página -->
-              <section
-                class="editor-producto"
-                id="editor-producto"
-                aria-labelledby="titulo-editor"
-                hidden
-              >
+              <section class="editor-producto" id="editor-producto" aria-labelledby="titulo-editor" hidden>
                 <div class="editor-cabecera">
                   <div>
                     <p class="vitrina-etiqueta" id="modo-editor">
@@ -1209,22 +869,9 @@
                     <h2 id="titulo-editor">Añadir producto</h2>
                   </div>
 
-                  <button
-                    type="button"
-                    class="boton-icono"
-                    id="cerrar-editor"
-                    aria-label="Cerrar formulario"
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      aria-hidden="true"
-                    >
+                  <button type="button" class="boton-icono" id="cerrar-editor" aria-label="Cerrar formulario">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+                      stroke-linecap="round" aria-hidden="true">
                       <path d="m6 6 12 12M18 6 6 18" />
                     </svg>
                   </button>
@@ -1242,28 +889,16 @@
                     <div class="campo">
                       <label for="producto-nombre">Nombre</label>
 
-                      <input
-                        id="producto-nombre"
-                        type="text"
-                        maxlength="100"
-                        placeholder="Ej.: Cerveza personal"
-                        required
-                      />
+                      <input id="producto-nombre" type="text" maxlength="100" placeholder="Ej.: Cerveza personal"
+                        required />
                     </div>
 
                     <div class="campos-dobles">
                       <div class="campo">
                         <label for="producto-precio">Precio · Bs</label>
 
-                        <input
-                          id="producto-precio"
-                          type="number"
-                          min="0.01"
-                          max="999999.99"
-                          step="0.01"
-                          placeholder="0.00"
-                          required
-                        />
+                        <input id="producto-precio" type="number" min="0.01" max="999999.99" step="0.01"
+                          placeholder="0.00" required />
                       </div>
 
                       <div class="campo">
@@ -1275,6 +910,7 @@
                           <option>Botellas</option>
                           <option>Cócteles</option>
                           <option>Sin alcohol</option>
+                          <option>Combos</option>
                           <option>Otros</option>
                         </select>
                       </div>
@@ -1283,30 +919,13 @@
                     <div class="campo campo-foto">
                       <label>Foto <span>· opcional</span></label>
 
-                      <button
-                        type="button"
-                        id="escoger-foto"
-                        class="subir-foto-cuadrado"
-                        aria-label="Seleccionar o cambiar foto del producto"
-                      >
-                        <img
-                          id="preview-producto"
-                          alt="Foto seleccionada"
-                          hidden
-                        />
+                      <button type="button" id="escoger-foto" class="subir-foto-cuadrado"
+                        aria-label="Seleccionar o cambiar foto del producto">
+                        <img id="preview-producto" alt="Foto seleccionada" hidden />
 
                         <span id="foto-placeholder">
-                          <svg
-                            width="26"
-                            height="26"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                          >
+                          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <rect x="3" y="3" width="18" height="18" rx="4" />
                             <circle cx="8" cy="8" r="1.5" />
                             <path d="m3 17 5-5 4 4 4-6 5 7" />
@@ -1318,646 +937,522 @@
                       </button>
 
                       <!-- Este campo conserva el archivo que subirá tu guardado actual. -->
-                      <input
-                        id="producto-foto"
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        hidden
-                      />
+                      <input id="producto-foto" type="file" accept="image/jpeg,image/png,image/webp" hidden />
                     </div>
                   </fieldset>
 
                   <div class="editor-acciones">
-                    <button
-                      type="button"
-                      class="boton-secundario"
-                      id="cancelar-producto"
-                    >
+                    <button type="button" class="boton-secundario" id="cancelar-producto">
                       Cancelar
                     </button>
 
-                    <button
-                      type="submit"
-                      class="boton-principal"
-                      id="guardar-producto"
-                    >
+                    <button type="submit" class="boton-principal" id="guardar-producto">
                       Guardar producto
                     </button>
                   </div>
 
-                  <p
-                    id="mensaje-productos"
-                    role="status"
-                    aria-live="polite"
-                  ></p>
+                  <p id="mensaje-productos" role="status" aria-live="polite"></p>
                 </form>
               </section>
             </div>
           </div>
 
-          <button type="button" class="boton-salir" id="salir-productos" hidden>
-            Cerrar sesión
-          </button>
+          <section class="reporte-productos-panel" id="reporte-ventas-productos"
+            aria-labelledby="titulo-reporte-productos" data-product-sales-report data-products-panel="reports"
+            role="region" hidden inert>
+            <header class="reporte-productos-cabecera">
+              <div>
+                <p class="reporte-productos-sello">ANÁLISIS · CATÁLOGO</p>
+                <h2 id="titulo-reporte-productos">Ventas detalladas por producto</h2>
+                <p>Filtra por período, caja y categoría para revisar cada producto vendido.</p>
+              </div>
+              <span class="reporte-productos-formato">REPORTE DE VENTAS</span>
+            </header>
+
+            <div class="controles-reporte-productos" data-report-filters>
+              <div class="control-reporte">
+                <label for="desde-reporte-productos">Desde</label>
+                <input id="desde-reporte-productos" type="date" data-report-start />
+              </div>
+              <div class="control-reporte">
+                <label for="hasta-reporte-productos">Hasta</label>
+                <input id="hasta-reporte-productos" type="date" data-report-end />
+              </div>
+              <div class="control-reporte control-reporte-categoria">
+                <label for="categoria-reporte-productos">Categoría</label>
+                <select id="categoria-reporte-productos" data-report-category>
+                  <option value="">Todas las categorías</option>
+                  <option value="Cervezas">Cervezas</option>
+                  <option value="Botellas">Botellas</option>
+                  <option value="Cócteles">Cócteles</option>
+                  <option value="Sin alcohol">Sin alcohol</option>
+                  <option value="Combos">Combos</option>
+                  <option value="Otros">Otros</option>
+                </select>
+              </div>
+              <div class="control-reporte control-reporte-caja">
+                <label for="caja-reporte-productos">Caja</label>
+                <select id="caja-reporte-productos" data-report-cash-register>
+                  <option value="">Todas las cajas</option>
+                </select>
+              </div>
+              <div class="control-reporte control-reporte-vista">
+                <label for="vista-reporte-productos">Vista</label>
+                <select id="vista-reporte-productos">
+                  <option value="detail">Detallado por venta</option>
+                  <option value="general">General por producto</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="reporte-hoja-marco">
+              <table class="reporte-hoja" id="tabla-reporte-productos"
+                aria-label="Detalle de ventas y productos vendidos"
+                data-report-table>
+                <thead>
+                  <tr>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col">Descuento</th>
+                    <th scope="col">Nota</th>
+                    <th scope="col">Fecha y hora</th>
+                    <th scope="col">N.º de venta</th>
+                    <th scope="col">Caja</th>
+                    <th scope="col">Cantidad</th>
+                    <th scope="col">Total cobrado</th>
+                  </tr>
+                </thead>
+                <tbody id="cuerpo-reporte-productos" data-report-rows></tbody>
+              </table>
+              <p class="reporte-vacio" id="estado-reporte-productos" role="status" aria-live="polite" data-report-empty>
+                El detalle de productos vendidos aparecerá aquí.
+              </p>
+            </div>
+            <nav id="paginacion-detalle-ventas" class="reporte-paginacion"
+              aria-label="Páginas del detalle de ventas">
+              <button id="anterior-detalle-ventas" type="button" disabled>Anterior</button>
+              <span id="pagina-detalle-ventas" aria-live="polite"></span>
+              <button id="siguiente-detalle-ventas" type="button" disabled>Siguiente</button>
+            </nav>
+          </section>
         </div>
-      </section>
-      <input
-        id="selector-recorte"
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        hidden
-      />
 
-      <dialog
-        id="modal-recorte"
-        class="modal-recorte"
-        aria-labelledby="titulo-recorte"
-      >
-        <div class="recorte-cabecera">
-          <div>
-            <p class="vitrina-etiqueta">FOTO DEL PRODUCTO</p>
-            <h2 id="titulo-recorte">Ajusta tu imagen</h2>
-          </div>
-
-          <button
-            id="cerrar-recorte"
-            type="button"
-            class="boton-icono"
-            aria-label="Cancelar recorte"
-          >
-            ×
-          </button>
-        </div>
-
-        <p class="recorte-ayuda">
-          Arrastra el marco o sus esquinas para elegir el área. Puedes ampliar
-          con la rueda del mouse o con dos dedos.
+        <p id="productos-acceso-estado" hidden>
+          La gestión del catálogo está disponible para administración.
         </p>
 
-        <div class="recorte-escenario">
-          <img id="imagen-recorte" alt="Imagen para recortar" />
-        </div>
-
-        <p id="estado-recorte" role="status"></p>
-
-        <div class="recorte-acciones">
-          <button
-            id="usar-completa"
-            type="button"
-            class="boton-secundario"
-            disabled
-          >
-            Usar completa
-          </button>
-
-          <button
-            id="aplicar-recorte"
-            type="button"
-            class="boton-principal"
-            disabled
-          >
-            Aplicar recorte
-          </button>
-        </div>
-      </dialog>
-
-      <div
-        id="toast-paypos"
-        class="toast-paypos"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-      ></div>
-    </main>
-    <section
-      id="pantalla-cobro"
-      class="pantalla-cobro"
-      hidden
-      inert
-      aria-labelledby="cobro-titulo"
-    >
-      <div class="cobro-contenido">
-        <header class="cobro-cabecera">
-          <button id="cerrar-cobro" class="cobro-volver" type="button">
-            Volver
-          </button>
-
-
-          <div class="cobro-cabecera-info">
-            <h1 id="cobro-titulo" class="cobro-titulo-oculto">
-              Seleccionar método de pago
-            </h1>
-          </div>
-
-          <div class="cobro-total-cabecera" hidden>
-            <strong id="cobro-total">Bs 0</strong>
-          </div>
-
-        </header>
-
-
-        <!-- SELECTOR DE MÉTODOS DE PAGO -->
-        <nav class="cobro-metodos cobro-rombos"
-             aria-label="Método de pago">
-
-          <div class="cobro-rombos-grid">
-
-            <!-- QR -->
-            <button
-              type="button"
-              class="cobro-metodo cobro-rombo activo"
-              data-metodo="qr"
-              aria-label="Pagar con QR"
-            >
-              <span class="cobro-rombo-interior">
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8"
-                     aria-hidden="true">
-                  <rect x="3" y="3" width="7" height="7" rx="1"/>
-                  <rect x="14" y="3" width="7" height="7" rx="1"/>
-                  <rect x="3" y="14" width="7" height="7" rx="1"/>
-                  <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1"/>
-                </svg>
-                <span>QR</span>
-              </span>
-              <span class="cobro-rombo-check" aria-hidden="true">✓</span>
-            </button>
-
-            <!-- EFECTIVO -->
-            <button
-              type="button"
-              class="cobro-metodo cobro-rombo"
-              data-metodo="efectivo"
-              aria-label="Pagar en efectivo"
-            >
-              <span class="cobro-rombo-interior">
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8"
-                     aria-hidden="true">
-                  <rect x="2" y="6" width="20" height="12" rx="2"/>
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M5 9h2M17 15h2"/>
-                </svg>
-                <span>Efectivo</span>
-              </span>
-              <span class="cobro-rombo-check" aria-hidden="true">✓</span>
-            </button>
-
-            <!-- TARJETA -->
-            <button
-              type="button"
-              class="cobro-metodo cobro-rombo"
-              data-metodo="tarjeta"
-              aria-label="Pagar con tarjeta"
-            >
-              <span class="cobro-rombo-interior">
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8"
-                     aria-hidden="true">
-                  <rect x="2" y="5" width="20" height="14" rx="2"/>
-                  <path d="M2 10h20M6 15h4"/>
-                </svg>
-                <span>Tarjeta</span>
-              </span>
-              <span class="cobro-rombo-check" aria-hidden="true">✓</span>
-            </button>
-
-            <!-- MIXTO -->
-            <button
-              type="button"
-              class="cobro-metodo cobro-rombo"
-              data-metodo="mixto"
-              aria-label="Pago mixto"
-            >
-              <span class="cobro-rombo-interior">
-                <svg viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.8"
-                     aria-hidden="true">
-                  <path d="m12 3 9 5-9 5-9-5 9-5Z"/>
-                  <path d="m3 12 9 5 9-5"/>
-                  <path d="m3 16 9 5 9-5"/>
-                </svg>
-                <span>Mixto</span>
-              </span>
-              <span class="cobro-rombo-check" aria-hidden="true">✓</span>
-            </button>
-
-            <!-- CENTRO DECORATIVO -->
-            <div class="cobro-rombos-centro" aria-hidden="true">
-              <svg viewBox="0 0 24 24"
-                   fill="none"
-                   stroke="currentColor"
-                   stroke-width="1.7">
-                <path d="M4 7V5a2 2 0 0 1 2-2h11"/>
-                <path d="M4 7h14a3 3 0 0 1 3 3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z"/>
-                <path d="M21 12h-6a2 2 0 0 0 0 4h6"/>
-                <circle cx="16" cy="14" r=".7"/>
-              </svg>
-            </div>
-
-          </div>
-        </nav>
-
-
-        <main class="cobro-cuerpo">
-          <!-- QR -->
-          <section class="cobro-vista activa" data-vista-pago="qr">
-            <div class="cobro-simple">
-              <p class="cobro-tipo-grande">QR</p>
-
-              <p class="cobro-importe-grande" id="cobro-qr-total">Bs 0</p>
-
-              <p class="cobro-ayuda">
-                Confirma únicamente cuando el pago por QR haya sido recibido.
-              </p>
-            </div>
-          </section>
-
-          <!-- EFECTIVO -->
-          <section class="cobro-vista" data-vista-pago="efectivo" hidden>
-            <div class="cobro-simple">
-              <p class="cobro-tipo-grande">Efectivo</p>
-
-              <p class="cobro-importe-grande" id="cobro-efectivo-total">Bs 0</p>
-
-              <label class="cobro-label" for="cobro-efectivo-recibido">
-                Monto recibido
-              </label>
-
-              <div class="cobro-input-grande">
-                <span>Bs</span>
-
-                <input
-                  id="cobro-efectivo-recibido"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  step="1"
-                  placeholder="0"
-                  autocomplete="off"
-                />
-              </div>
-
-              <div class="cobro-cambio">
-                <span>Cambio</span>
-                <strong id="cobro-cambio">Bs 0</strong>
-              </div>
-            </div>
-          </section>
-
-          <!-- TARJETA -->
-          <section class="cobro-vista" data-vista-pago="tarjeta" hidden>
-            <div class="cobro-simple">
-              <p class="cobro-tipo-grande">Tarjeta</p>
-
-              <p class="cobro-importe-grande" id="cobro-tarjeta-total">Bs 0</p>
-
-              <p class="cobro-ayuda">
-                Procesa el pago en el POS y confirma cuando la operación haya
-                sido aprobada.
-              </p>
-            </div>
-          </section>
-
-          <!-- MIXTO -->
-          <section class="cobro-vista" data-vista-pago="mixto" hidden>
-            <div class="mixto-contenedor">
-              <div class="mixto-cabecera">
-                <p>Distribuir pago</p>
-
-                <strong id="mixto-total"> Bs 0 </strong>
-              </div>
-
-              <!-- FILA 1 -->
-              <div class="mixto-linea">
-                <select
-                  class="mixto-metodo"
-                  data-mixto-metodo
-                  aria-label="Primer método"
-                >
-                  <option value="qr">QR</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="tarjeta">Tarjeta</option>
-                </select>
-
-                <div class="mixto-monto">
-                  <span>Bs</span>
-
-                  <input
-                    type="number"
-                    inputmode="numeric"
-                    min="0"
-                    step="1"
-                    value=""
-                    data-mixto-monto
-                    aria-label="Primer monto"
-                  />
-                </div>
-              </div>
-
-              <!-- FILA 2 -->
-              <div class="mixto-linea">
-                <select
-                  class="mixto-metodo"
-                  data-mixto-metodo
-                  aria-label="Segundo método"
-                >
-                  <option value="efectivo">Efectivo</option>
-                  <option value="qr">QR</option>
-                  <option value="tarjeta">Tarjeta</option>
-                </select>
-
-                <div class="mixto-monto">
-                  <span>Bs</span>
-
-                  <input
-                    type="number"
-                    inputmode="numeric"
-                    min="0"
-                    step="1"
-                    value="0"
-                    data-mixto-monto
-                    aria-label="Segundo monto"
-                  />
-                </div>
-              </div>
-
-              <!-- FILA 3 -->
-              <div class="mixto-linea">
-                <select
-                  class="mixto-metodo"
-                  data-mixto-metodo
-                  aria-label="Tercer método"
-                >
-                  <option value="tarjeta">Tarjeta</option>
-                  <option value="qr">QR</option>
-                  <option value="efectivo">Efectivo</option>
-                </select>
-
-                <div class="mixto-monto">
-                  <span>Bs</span>
-
-                  <input
-                    type="number"
-                    inputmode="numeric"
-                    min="0"
-                    step="1"
-                    value="0"
-                    data-mixto-monto
-                    aria-label="Tercer monto"
-                  />
-                </div>
-              </div>
-
-              <!-- efectivo recibido en mixto -->
-              <div id="mixto-efectivo-bloque" class="mixto-efectivo" hidden>
-                <label for="mixto-efectivo-recibido"> Efectivo recibido </label>
-
-                <div class="mixto-efectivo-input">
-                  <span>Bs</span>
-
-                  <input
-                    id="mixto-efectivo-recibido"
-                    type="number"
-                    inputmode="numeric"
-                    min="0"
-                    step="1"
-                    placeholder="0"
-                  />
-                </div>
-
-                <div class="mixto-cambio">
-                  <span>Cambio</span>
-                  <strong id="mixto-cambio">Bs 0</strong>
-                </div>
-              </div>
-
-              <div class="mixto-resumen">
-                <div>
-                  <span>Distribuido</span>
-                  <strong id="mixto-distribuido">Bs 0</strong>
-                </div>
-
-                <div>
-                  <span>Restante</span>
-                  <strong id="mixto-restante">Bs 0</strong>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        <footer class="cobro-pie">
-          <p
-            id="cobro-estado"
-            class="cobro-estado"
-            role="status"
-            aria-live="polite"
-          ></p>
-
-          <button id="confirmar-cobro" class="cobro-confirmar" type="button">
-            Confirmar cobro
-          </button>
-        </footer>
+        <button type="button" class="boton-salir" id="salir-productos" hidden>
+          Cerrar sesión
+        </button>
       </div>
     </section>
-    <dialog
-      id="modal-ajuste-pedido"
-      class="ajuste-modal"
-      aria-labelledby="ajuste-titulo"
-    >
-      <form id="form-ajuste-pedido">
-        <header class="ajuste-cabecera">
-          <h2 id="ajuste-titulo">Descuento del pedido</h2>
+    <input id="selector-recorte" type="file" accept="image/jpeg,image/png,image/webp" hidden />
 
-          <button
-            id="cerrar-ajuste"
-            class="ajuste-cerrar"
-            type="button"
-            aria-label="Cerrar ventana"
-          >
-            ×
+    <dialog id="modal-recorte" class="modal-recorte" aria-labelledby="titulo-recorte">
+      <div class="recorte-cabecera">
+        <div>
+          <p class="vitrina-etiqueta">FOTO DEL PRODUCTO</p>
+          <h2 id="titulo-recorte">Ajusta tu imagen</h2>
+        </div>
+
+        <button id="cerrar-recorte" type="button" class="boton-icono" aria-label="Cancelar recorte">
+          ×
+        </button>
+      </div>
+
+      <p class="recorte-ayuda">
+        Arrastra el marco o sus esquinas para elegir el área. Puedes ampliar
+        con la rueda del mouse o con dos dedos.
+      </p>
+
+      <div class="recorte-escenario">
+        <img id="imagen-recorte" alt="Imagen para recortar" />
+      </div>
+
+      <p id="estado-recorte" role="status"></p>
+
+      <div class="recorte-acciones">
+        <button id="usar-completa" type="button" class="boton-secundario" disabled>
+          Usar completa
+        </button>
+
+        <button id="aplicar-recorte" type="button" class="boton-principal" disabled>
+          Aplicar recorte
+        </button>
+      </div>
+    </dialog>
+
+    <div id="toast-paypos" class="toast-paypos" role="status" aria-live="polite" aria-atomic="true"></div>
+  </main>
+  <section id="pantalla-cobro" class="pantalla-cobro" hidden inert aria-labelledby="cobro-titulo">
+    <div class="cobro-contenido">
+      <header class="cobro-cabecera">
+        <button id="cerrar-cobro" class="cobro-volver" type="button">
+          Volver
+        </button>
+
+
+        <div class="cobro-cabecera-info">
+          <h1 id="cobro-titulo" class="cobro-titulo-oculto">
+            Seleccionar método de pago
+          </h1>
+        </div>
+
+        <div class="cobro-total-cabecera" hidden>
+          <strong id="cobro-total">Bs 0</strong>
+        </div>
+
+      </header>
+
+
+      <!-- SELECTOR DE MÉTODOS DE PAGO -->
+      <nav class="cobro-metodos cobro-rombos" aria-label="Método de pago">
+
+        <div class="cobro-rombos-grid">
+
+          <!-- QR -->
+          <button type="button" class="cobro-metodo cobro-rombo activo" data-metodo="qr" aria-label="Pagar con QR">
+            <span class="cobro-rombo-interior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20h1" />
+              </svg>
+              <span>QR</span>
+            </span>
+            <span class="cobro-rombo-check" aria-hidden="true">✓</span>
           </button>
-        </header>
 
-        <section id="campos-descuento">
-          <div class="ajuste-tipos" id="selector-tipo-descuento">
-            <span class="ajuste-tipos-pieza" aria-hidden="true"></span>
+          <!-- EFECTIVO -->
+          <button type="button" class="cobro-metodo cobro-rombo" data-metodo="efectivo" aria-label="Pagar en efectivo">
+            <span class="cobro-rombo-interior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M5 9h2M17 15h2" />
+              </svg>
+              <span>Efectivo</span>
+            </span>
+            <span class="cobro-rombo-check" aria-hidden="true">✓</span>
+          </button>
 
-            <label>
-              <input type="radio" name="tipo-descuento" value="bs" checked />
-              <span>Bs</span>
-            </label>
+          <!-- TARJETA -->
+          <button type="button" class="cobro-metodo cobro-rombo" data-metodo="tarjeta" aria-label="Pagar con tarjeta">
+            <span class="cobro-rombo-interior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20M6 15h4" />
+              </svg>
+              <span>Tarjeta</span>
+            </span>
+            <span class="cobro-rombo-check" aria-hidden="true">✓</span>
+          </button>
 
-            <label>
-              <input type="radio" name="tipo-descuento" value="porcentaje" />
-              <span>%</span>
-            </label>
+          <!-- MIXTO -->
+          <button type="button" class="cobro-metodo cobro-rombo" data-metodo="mixto" aria-label="Pago mixto">
+            <span class="cobro-rombo-interior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+                <path d="m12 3 9 5-9 5-9-5 9-5Z" />
+                <path d="m3 12 9 5 9-5" />
+                <path d="m3 16 9 5 9-5" />
+              </svg>
+              <span>Mixto</span>
+            </span>
+            <span class="cobro-rombo-check" aria-hidden="true">✓</span>
+          </button>
+
+          <!-- CENTRO DECORATIVO -->
+          <div class="cobro-rombos-centro" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <path d="M4 7V5a2 2 0 0 1 2-2h11" />
+              <path d="M4 7h14a3 3 0 0 1 3 3v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" />
+              <path d="M21 12h-6a2 2 0 0 0 0 4h6" />
+              <circle cx="16" cy="14" r=".7" />
+            </svg>
           </div>
 
-          <label
-            id="descuento-label"
-            class="ajuste-label"
-            for="valor-descuento"
-          >
-            Monto de descuento
+        </div>
+      </nav>
+
+
+      <main class="cobro-cuerpo">
+        <!-- QR -->
+        <section class="cobro-vista activa" data-vista-pago="qr">
+          <div class="cobro-simple">
+            <p class="cobro-tipo-grande">QR</p>
+
+            <p class="cobro-importe-grande" id="cobro-qr-total">Bs 0</p>
+
+            <p class="cobro-ayuda">
+              Confirma únicamente cuando el pago por QR haya sido recibido.
+            </p>
+          </div>
+        </section>
+
+        <!-- EFECTIVO -->
+        <section class="cobro-vista" data-vista-pago="efectivo" hidden>
+          <div class="cobro-simple">
+            <p class="cobro-tipo-grande">Efectivo</p>
+
+            <p class="cobro-importe-grande" id="cobro-efectivo-total">Bs 0</p>
+
+            <label class="cobro-label" for="cobro-efectivo-recibido">
+              Monto recibido
+            </label>
+
+            <div class="cobro-input-grande">
+              <span>Bs</span>
+
+              <input id="cobro-efectivo-recibido" type="number" inputmode="numeric" min="0" step="1" placeholder="0"
+                autocomplete="off" />
+            </div>
+
+            <div class="cobro-cambio">
+              <span>Cambio</span>
+              <strong id="cobro-cambio">Bs 0</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- TARJETA -->
+        <section class="cobro-vista" data-vista-pago="tarjeta" hidden>
+          <div class="cobro-simple">
+            <p class="cobro-tipo-grande">Tarjeta</p>
+
+            <p class="cobro-importe-grande" id="cobro-tarjeta-total">Bs 0</p>
+
+            <p class="cobro-ayuda">
+              Procesa el pago en el POS y confirma cuando la operación haya
+              sido aprobada.
+            </p>
+          </div>
+        </section>
+
+        <!-- MIXTO -->
+        <section class="cobro-vista" data-vista-pago="mixto" hidden>
+          <div class="mixto-contenedor">
+            <div class="mixto-cabecera">
+              <p>Distribuir pago</p>
+
+              <strong id="mixto-total"> Bs 0 </strong>
+            </div>
+
+            <!-- FILA 1 -->
+            <div class="mixto-linea">
+              <select class="mixto-metodo" data-mixto-metodo aria-label="Primer método">
+                <option value="qr">QR</option>
+                <option value="efectivo">Efectivo</option>
+                <option value="tarjeta">Tarjeta</option>
+              </select>
+
+              <div class="mixto-monto">
+                <span>Bs</span>
+
+                <input type="number" inputmode="numeric" min="0" step="1" value="" data-mixto-monto
+                  aria-label="Primer monto" />
+              </div>
+            </div>
+
+            <!-- FILA 2 -->
+            <div class="mixto-linea">
+              <select class="mixto-metodo" data-mixto-metodo aria-label="Segundo método">
+                <option value="efectivo">Efectivo</option>
+                <option value="qr">QR</option>
+                <option value="tarjeta">Tarjeta</option>
+              </select>
+
+              <div class="mixto-monto">
+                <span>Bs</span>
+
+                <input type="number" inputmode="numeric" min="0" step="1" value="0" data-mixto-monto
+                  aria-label="Segundo monto" />
+              </div>
+            </div>
+
+            <!-- FILA 3 -->
+            <div class="mixto-linea">
+              <select class="mixto-metodo" data-mixto-metodo aria-label="Tercer método">
+                <option value="tarjeta">Tarjeta</option>
+                <option value="qr">QR</option>
+                <option value="efectivo">Efectivo</option>
+              </select>
+
+              <div class="mixto-monto">
+                <span>Bs</span>
+
+                <input type="number" inputmode="numeric" min="0" step="1" value="0" data-mixto-monto
+                  aria-label="Tercer monto" />
+              </div>
+            </div>
+
+            <!-- efectivo recibido en mixto -->
+            <div id="mixto-efectivo-bloque" class="mixto-efectivo" hidden>
+              <label for="mixto-efectivo-recibido"> Efectivo recibido </label>
+
+              <div class="mixto-efectivo-input">
+                <span>Bs</span>
+
+                <input id="mixto-efectivo-recibido" type="number" inputmode="numeric" min="0" step="1"
+                  placeholder="0" />
+              </div>
+
+              <div class="mixto-cambio">
+                <span>Cambio</span>
+                <strong id="mixto-cambio">Bs 0</strong>
+              </div>
+            </div>
+
+            <div class="mixto-resumen">
+              <div>
+                <span>Distribuido</span>
+                <strong id="mixto-distribuido">Bs 0</strong>
+              </div>
+
+              <div>
+                <span>Falta para completar</span>
+                <strong id="mixto-restante">Bs 0</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="cobro-pie">
+        <p id="cobro-estado" class="cobro-estado" role="status" aria-live="polite"></p>
+
+        <button id="confirmar-cobro" class="cobro-confirmar" type="button">
+          Confirmar cobro
+        </button>
+      </footer>
+    </div>
+  </section>
+  <dialog id="modal-ajuste-pedido" class="ajuste-modal" aria-labelledby="ajuste-titulo">
+    <form id="form-ajuste-pedido">
+      <header class="ajuste-cabecera">
+        <h2 id="ajuste-titulo">Descuento del pedido</h2>
+
+        <button id="cerrar-ajuste" class="ajuste-cerrar" type="button" aria-label="Cerrar ventana">
+          ×
+        </button>
+      </header>
+
+      <section id="campos-descuento">
+        <div class="ajuste-tipos" id="selector-tipo-descuento">
+          <span class="ajuste-tipos-pieza" aria-hidden="true"></span>
+
+          <label>
+            <input type="radio" name="tipo-descuento" value="bs" checked />
+            <span>Bs</span>
           </label>
 
-          <div class="ajuste-valor-wrap">
-            <input
-              id="valor-descuento"
-              class="ajuste-entrada"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              step="1"
-              placeholder="0"
-              aria-describedby="descuento-ayuda"
-            />
+          <label>
+            <input type="radio" name="tipo-descuento" value="porcentaje" />
+            <span>%</span>
+          </label>
+        </div>
 
-            <span id="descuento-unidad" class="ajuste-unidad" aria-hidden="true"
-              >Bs</span
-            >
-          </div>
-
-          <p id="descuento-ayuda" hidden></p>
-
-          <div class="ajuste-preview" aria-live="polite">
-            <div class="ajuste-preview-fila">
-              <span>Subtotal</span>
-              <span id="ajuste-subtotal">Bs 0</span>
-            </div>
-
-            <div class="ajuste-preview-fila ajuste-preview-descuento">
-              <span id="ajuste-descuento-label">Descuento</span>
-              <span id="ajuste-descuento">− Bs 0</span>
-            </div>
-
-            <div class="ajuste-preview-total">
-              <span>Total</span>
-              <strong id="ajuste-total">Bs 0</strong>
-            </div>
-          </div>
-        </section>
-
-        <section id="campos-nota" hidden>
-          <textarea
-            id="texto-nota"
-            class="ajuste-entrada"
-            rows="5"
-            maxlength="180"
-            aria-label="Nota del pedido"
-            placeholder="Escribe las indicaciones del pedido…"
-          ></textarea>
-
-          <p class="ajuste-contador"><span id="nota-caracteres">0</span>/180</p>
-
-          <p class="ajuste-nota-aviso">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 11v6M12 7v1" />
-            </svg>
-            <span>Indicaciones para la comanda.</span>
-          </p>
-        </section>
-
-        <p id="ajuste-error" class="ajuste-error" role="alert"></p>
-
-        <footer class="ajuste-acciones">
-          <button id="cancelar-ajuste" class="ajuste-quitar" type="button">
-            Cancelar
-          </button>
-
-          <button id="guardar-ajuste" class="ajuste-guardar" type="submit">
-            Aplicar
-          </button>
-        </footer>
-
-        <button id="quitar-ajuste" type="button" hidden>Quitar ajuste</button>
-      </form>
-    </dialog>
-    <dialog
-      id="modal-recuperar-acceso"
-      class="ajuste-modal"
-      aria-labelledby="recuperar-titulo"
-    >
-      <form id="form-recuperar-acceso">
-        <header class="ajuste-cabecera">
-          <h2 id="recuperar-titulo">Nueva contraseña</h2>
-        </header>
-
-        <p id="recuperar-cuenta" role="status">Verificando la cuenta…</p>
-
-        <label class="ajuste-label" for="recuperar-clave">
-          Contraseña nueva
+        <label id="descuento-label" class="ajuste-label" for="valor-descuento">
+          Monto de descuento
         </label>
 
-        <input
-          id="recuperar-clave"
-          class="ajuste-entrada"
-          name="nueva-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="12"
-          maxlength="128"
-          aria-describedby="recuperar-ayuda"
-          required
-          disabled
-        />
+        <div class="ajuste-valor-wrap">
+          <input id="valor-descuento" class="ajuste-entrada" type="number" inputmode="numeric" min="0" step="1"
+            placeholder="0" aria-describedby="descuento-ayuda" />
 
-        <p id="recuperar-ayuda">
-          Usa al menos 12 caracteres. Puedes combinar varias palabras.
+          <span id="descuento-unidad" class="ajuste-unidad" aria-hidden="true">Bs</span>
+        </div>
+
+        <p id="descuento-ayuda" hidden></p>
+
+        <div class="ajuste-preview" aria-live="polite">
+          <div class="ajuste-preview-fila">
+            <span>Subtotal</span>
+            <span id="ajuste-subtotal">Bs 0</span>
+          </div>
+
+          <div class="ajuste-preview-fila ajuste-preview-descuento">
+            <span id="ajuste-descuento-label">Descuento</span>
+            <span id="ajuste-descuento">− Bs 0</span>
+          </div>
+
+          <div class="ajuste-preview-total">
+            <span>Total</span>
+            <strong id="ajuste-total">Bs 0</strong>
+          </div>
+        </div>
+      </section>
+
+      <section id="campos-nota" hidden>
+        <textarea id="texto-nota" class="ajuste-entrada" rows="5" maxlength="180" aria-label="Nota del pedido"
+          placeholder="Escribe las indicaciones del pedido…"></textarea>
+
+        <p class="ajuste-contador"><span id="nota-caracteres">0</span>/180</p>
+
+        <p class="ajuste-nota-aviso">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v6M12 7v1" />
+          </svg>
+          <span>Indicaciones para la comanda.</span>
         </p>
+      </section>
 
-        <label class="ajuste-label" for="recuperar-confirmacion">
-          Repite la contraseña
-        </label>
+      <p id="ajuste-error" class="ajuste-error" role="alert"></p>
 
-        <input
-          id="recuperar-confirmacion"
-          class="ajuste-entrada"
-          name="confirmar-password"
-          type="password"
-          autocomplete="new-password"
-          minlength="12"
-          maxlength="128"
-          required
-          disabled
-        />
+      <footer class="ajuste-acciones">
+        <button id="cancelar-ajuste" class="ajuste-quitar" type="button">
+          Cancelar
+        </button>
 
-        <p
-          id="recuperar-estado"
-          class="ajuste-error"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <button id="guardar-ajuste" class="ajuste-guardar" type="submit">
+          Aplicar
+        </button>
+      </footer>
 
-        <footer class="ajuste-acciones">
-          <button
-            id="cancelar-recuperacion"
-            class="ajuste-quitar"
-            type="button"
-          >
-            Cancelar
-          </button>
+      <button id="quitar-ajuste" type="button" hidden>Quitar ajuste</button>
+    </form>
+  </dialog>
+  <dialog id="modal-recuperar-acceso" class="ajuste-modal" aria-labelledby="recuperar-titulo">
+    <form id="form-recuperar-acceso">
+      <header class="ajuste-cabecera">
+        <h2 id="recuperar-titulo">Nueva contraseña</h2>
+      </header>
 
-          <button
-            id="guardar-nueva-clave"
-            class="ajuste-guardar"
-            type="submit"
-            disabled
-          >
-            Guardar contraseña
-          </button>
-        </footer>
-      </form>
-    </dialog>
-  </body>
+      <p id="recuperar-cuenta" role="status">Verificando la cuenta…</p>
+
+      <label class="ajuste-label" for="recuperar-clave">
+        Contraseña nueva
+      </label>
+
+      <input id="recuperar-clave" class="ajuste-entrada" name="nueva-password" type="password"
+        autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="recuperar-ayuda" required
+        disabled />
+
+      <p id="recuperar-ayuda">
+        Usa al menos 12 caracteres. Puedes combinar varias palabras.
+      </p>
+
+      <label class="ajuste-label" for="recuperar-confirmacion">
+        Repite la contraseña
+      </label>
+
+      <input id="recuperar-confirmacion" class="ajuste-entrada" name="confirmar-password" type="password"
+        autocomplete="new-password" minlength="12" maxlength="128" required disabled />
+
+      <p id="recuperar-estado" class="ajuste-error" role="status" aria-live="polite"></p>
+
+      <footer class="ajuste-acciones">
+        <button id="cancelar-recuperacion" class="ajuste-quitar" type="button">
+          Cancelar
+        </button>
+
+        <button id="guardar-nueva-clave" class="ajuste-guardar" type="submit" disabled>
+          Guardar contraseña
+        </button>
+      </footer>
+    </form>
+  </dialog>
+</body>
+
 </html>
