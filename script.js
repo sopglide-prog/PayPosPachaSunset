@@ -1636,8 +1636,28 @@ window.payposTurnoActual = null;
     }, 480);
   }
 
-  [cierreQr, cierreTarjeta, ...cortesCierre].forEach((input) => {
+
+  const camposCierre = [cierreQr, cierreTarjeta, ...cortesCierre];
+
+  camposCierre.forEach((input) => {
     input.addEventListener("input", actualizarTotalCierre);
+  });
+
+  cortesCierre.forEach((input, indice) => {
+    input.addEventListener("keydown", (evento) => {
+      if (evento.key !== "Enter") return;
+
+      evento.preventDefault();
+
+      const siguiente = cortesCierre[indice + 1];
+
+      if (siguiente) {
+        siguiente.focus();
+        siguiente.select();
+      } else {
+        input.blur();
+      }
+    });
   });
 
   cerrarPantallaCierre.addEventListener("click", () => {
@@ -5753,6 +5773,13 @@ window.payposTurnoActual = null;
     dibujarPedido();
   }
 
+  let temporizadorReinicioCatalogo = null;
+
+  document.getElementById("buscar-inicio")
+    ?.addEventListener("input", () => {
+      clearTimeout(temporizadorReinicioCatalogo);
+    });
+
   document.addEventListener("paypos:seleccionar-producto", (evento) => {
     if (inicio.hidden || inicio.inert) return;
 
@@ -5798,12 +5825,26 @@ window.payposTurnoActual = null;
       `${pedido.get(producto.id).cantidad} unidades.`;
 
     // Limpiar la búsqueda solo después de agregar el producto al pedido.
+
+    // Limpiar solo el texto y mantener las tarjetas.
     const buscadorInicio = document.getElementById("buscar-inicio");
+
     if (buscadorInicio) {
+      clearTimeout(temporizadorReinicioCatalogo);
+
       buscadorInicio.value = "";
-      buscadorInicio.dispatchEvent(new Event("input", { bubbles: true }));
       buscadorInicio.focus({ preventScroll: true });
+
+      // Esperar 7 segundos para mostrar todos los productos.
+      temporizadorReinicioCatalogo = setTimeout(() => {
+        buscadorInicio.dispatchEvent(
+          new Event("input", { bubbles: true })
+        );
+
+        temporizadorReinicioCatalogo = null;
+      }, 7000);
     }
+
   });
 
   vaciar.addEventListener("click", () => {
