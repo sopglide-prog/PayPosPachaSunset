@@ -10756,3 +10756,86 @@ document.documentElement.classList.toggle(
   `;
   document.head.appendChild(estilo);
 })();
+
+/* CIERRE DE CAJA: ENTER HACIA ABAJO */
+(() => {
+  const contenedor = document.getElementById(
+    "cierre-hojas-cajas"
+  );
+
+  if (!contenedor) return;
+
+  contenedor.addEventListener("keydown", (evento) => {
+    if (evento.key !== "Enter" || evento.isComposing) {
+      return;
+    }
+
+    const actual = evento.target;
+
+    if (!actual.matches("input:not([disabled])")) {
+      return;
+    }
+
+    const hoja = actual.closest("[data-cierre-hoja]");
+    if (!hoja) return;
+
+    const campos = [...hoja.querySelectorAll("input")]
+      .filter((campo) =>
+        !campo.disabled &&
+        campo.getClientRects().length > 0
+      );
+
+    // Ordenar primero por columna y después por fila.
+    const posiciones = campos.map((campo) => {
+      const celda = campo.closest("td");
+      const rect = (celda || campo).getBoundingClientRect();
+
+      return {
+        campo,
+        x: rect.left,
+        y: rect.top
+      };
+    });
+
+    // Agrupar celdas de la misma columna.
+    const columnas = [];
+
+    posiciones
+      .sort((a, b) => a.x - b.x)
+      .forEach((item) => {
+        let columna = columnas.find(
+          (grupo) => Math.abs(grupo.x - item.x) < 5
+        );
+
+        if (!columna) {
+          columna = { x: item.x, items: [] };
+          columnas.push(columna);
+        }
+
+        columna.items.push(item);
+      });
+
+    // Recorrer hacia abajo y luego a la derecha.
+    const ordenados = columnas
+      .sort((a, b) => a.x - b.x)
+      .flatMap((columna) =>
+        columna.items
+          .sort((a, b) => a.y - b.y)
+          .map((item) => item.campo)
+      );
+
+    const indice = ordenados.indexOf(actual);
+    if (indice === -1) return;
+
+    evento.preventDefault();
+
+    const siguiente = ordenados[indice + 1];
+
+    if (siguiente) {
+      siguiente.focus();
+      siguiente.select();
+    } else {
+      actual.blur();
+    }
+  });
+})();
